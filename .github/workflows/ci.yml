@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install
+        run: npm ci
+
+      - name: Type-check
+        run: npx tsc --noEmit
+
+      - name: Build
+        env:
+          NEXT_PUBLIC_ADMIN_API_URL: https://api.relavoi.com/v1/admin
+          NEXT_PUBLIC_ENV_LABEL: ci
+        run: npm run build
+
+  # E2E only runs on PRs to main — it needs the backend + seeded DB to be
+  # spinnable in the workflow, which we wire up below. For everyday push CI
+  # we keep the loop tight with just type-check + build above.
+  e2e:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'pull_request'
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: relavoi
+          POSTGRES_PASSWORD: relavoi_dev
+          POSTGRES_DB: relavoi
+        ports: ["5432:5432"]
+        options: --health-cmd="pg_isready -U relavoi" --health-interval=5s --health-timeout=3s --health-retries=10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: --health-cmd="redis-cli ping" --health-interval=5s --health-timeout=3s --health-retries=10
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20", cache: "npm" }
+
+      - name: Install admin deps
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Check out + boot relavoi-backend for the API surface
+        run: |
+          git clone --depth 1 https://github.com/cicanda/relavoi-backend.git /tmp/relavoi-backend
+          cd /tmp/relavoi-backend
+          npm ci
+          # Generate ephemeral secrets just for the CI run.
+          cp .env.example .env
+          sed -i "s|^JWT_SECRET=.*|JWT_SECRET=$(openssl rand -hex 32)|" .env
+          sed -i "s|^ENCRYPTION_MASTER_KEY=.*|ENCRYPTION_MASTER_KEY=$(openssl rand -hex 32)|" .env
+          sed -i "s|^DATABASE_URL=.*|DATABASE_URL=postgresql://relavoi:relavoi_dev@localhost:5432/relavoi|" .env
+          npm run migrate
+          npm run seed
+          npm run seed:pricing
+          nohup node dist/index.js > /tmp/backend.log 2>&1 &
+
+      - name: Wait for backend health
+        run: |
+          for i in {1..30}; do
+            if curl -fs http://localhost:3000/v1/health; then break; fi
+            sleep 1
+          done
+
+      - name: Run Playwright
+        run: npx playwright test

@@ -1,26 +1,83 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* ─── Relavoi operator console (dark theme) ─────────────────────────────── */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Ink scale — same tokens as the tenant dashboard but used inverted here */
+  --color-ink-900: #0B1220;
+  --color-ink-800: #1A2332;
+  --color-ink-700: #1E293B;
+  --color-ink-600: #334155;
+  --color-ink-500: #64748B;
+  --color-ink-400: #94A3B8;
+  --color-ink-300: #CBD5E1;
+  --color-ink-200: #E2E8F0;
+
+  --color-paper: #FFFFFF;
+  --color-bone-100: #F5F2EC;
+
+  /* Brand accent */
+  --color-signal-500: #5BC97A;
+  --color-signal-600: #4AAF68;
+  --color-signal-700: #3A9456;
+
+  /* Operator role badge color */
+  --color-rose-500: #F43F5E;
+  --color-rose-700: #BE123C;
+
+  /* Typography (wired via next/font) */
+  --font-sans: var(--font-plex-sans);
+  --font-mono: var(--font-plex-mono);
+
+  --radius-card: 10px;
+  --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.3), 0 1px 3px 0 rgb(0 0 0 / 0.4);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Base ----------------------------------------------------------------- */
+html, body {
+  background: var(--color-ink-900);
+  color: var(--color-ink-200);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+::selection {
+  background: var(--color-signal-500);
+  color: var(--color-ink-900);
 }
+
+input, select, textarea { font-family: inherit; color: inherit; }
+input::placeholder, textarea::placeholder { color: var(--color-ink-500); }
+select option { color: var(--color-ink-900); }
+
+:focus-visible {
+  outline: 2px solid var(--color-signal-500);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.font-mono { font-family: var(--font-mono), ui-monospace, monospace; }
+
+/* Pulse dot for "live"/ACTIVE indicators */
+@keyframes pulse-dot {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(91 201 122 / 0.5); }
+  50%      { box-shadow: 0 0 0 6px rgb(91 201 122 / 0); }
+}
+.animate-pulse-dot { animation: pulse-dot 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+
+/* Skeleton shimmer (dark) */
+@keyframes shimmer-dark {
+  0% { background-position: -200px 0; }
+  100% { background-position: calc(200px + 100%) 0; }
+}
+.animate-shimmer {
+  background: linear-gradient(90deg, var(--color-ink-800) 0%, var(--color-ink-700) 40%, var(--color-ink-800) 80%);
+  background-size: 200px 100%;
+  animation: shimmer-dark 1.5s ease-in-out infinite;
+}
+
+/* Custom scrollbars (dark) */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--color-ink-900); }
+::-webkit-scrollbar-thumb { background: var(--color-ink-700); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-ink-600); }
