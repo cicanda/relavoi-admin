@@ -22,7 +22,7 @@ npm run dev          # listens on http://localhost:3003
 # open http://localhost:3003/login
 ```
 
-Needs the [relavoi-backend](https://github.com/cicanda/relavoi-backend) at the URL in `NEXT_PUBLIC_ADMIN_API_URL` (default `http://localhost:3000/v1/admin`).
+Needs the [relavoi-backend](https://github.com/cicanda/relavoi-backend) at the URL in `NEXT_PUBLIC_ADMIN_API_URL` (default `http://localhost:8080/v1/admin`).
 
 ## Dev credentials
 

@@ -68,7 +68,7 @@ export default function DlqPage() {
   const retryM = useMutation({
     mutationFn: (ids: string[]) => retryDlq(ids),
     onSuccess: (res) => {
-      toast.success("Retry queued", `${res.retried ?? 0} event(s) re-enqueued`);
+      toast.success("Retry queued", `${res.retrying ?? 0} event(s) re-enqueued`);
       qc.invalidateQueries({ queryKey: ["dlq"] });
     },
     onError: (err) => {

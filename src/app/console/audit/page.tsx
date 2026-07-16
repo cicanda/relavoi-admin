@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
@@ -201,11 +201,8 @@ export default function AuditPage() {
                   const isOpen = expanded.has(e.id);
                   const actor = ACTOR_STYLES[e.actorType];
                   return (
-                    <>
-                      <tr
-                        key={e.id}
-                        className="hover:bg-ink-900/60 transition-colors"
-                      >
+                    <Fragment key={e.id}>
+                      <tr className="hover:bg-ink-900/60 transition-colors">
                         <Td className="text-ink-400">
                           {fmtAbsolute(e.createdAt)}
                         </Td>
@@ -242,7 +239,7 @@ export default function AuditPage() {
                         </td>
                       </tr>
                       {isOpen && (
-                        <tr key={`${e.id}-detail`}>
+                        <tr>
                           <td
                             colSpan={5}
                             className="px-4 py-3 border-t border-ink-700 bg-ink-900/40"
@@ -267,7 +264,7 @@ export default function AuditPage() {
                           </td>
                         </tr>
                       )}
-                    </>
+                    </Fragment>
                   );
                 })
               )}

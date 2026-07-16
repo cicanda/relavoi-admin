@@ -19,7 +19,7 @@ import type {
 } from "./types";
 
 // NEXT_PUBLIC_ADMIN_API_URL points at the backend's /v1/admin namespace.
-const BASE = process.env.NEXT_PUBLIC_ADMIN_API_URL ?? "http://localhost:3000/v1/admin";
+const BASE = process.env.NEXT_PUBLIC_ADMIN_API_URL ?? "http://localhost:8080/v1/admin";
 
 export const adminApi: AxiosInstance = axios.create({
   baseURL: BASE,
@@ -105,9 +105,19 @@ export async function listAdminSessions(params: {
 }
 
 // ─── Fleet (numbers + infra) ──────────────────────────────────────────────────
+export interface FleetRegion {
+  region: string;
+  total: number;
+  available: number;
+  inUse: number;
+  cooldown: number;
+  quarantined: number;
+}
+
 export interface FleetSummary {
-  pool?: PoolStatus[];
+  pools?: PoolStatus[];
   numbers?: ProxyNumber[];
+  byRegion?: FleetRegion[];
   totals?: {
     total?: number;
     available?: number;
@@ -122,38 +132,61 @@ export async function getFleet() {
   return data;
 }
 
-// Quarantine / release are not yet implemented on the backend. We provide them
-// here so pages can call them and surface a friendly "coming soon" toast on
-// 404, instead of doing string-handling at every call site.
+// Quarantine / release: backend exposes these as POST /admin/pool/{quarantine,release}
+// with the number in the request body.
 export async function quarantineNumber(num: string, reason: string) {
-  const { data } = await adminApi.post(`/numbers/${encodeURIComponent(num)}/quarantine`, { reason });
+  const { data } = await adminApi.post("/pool/quarantine", { number: num, reason });
   return data;
 }
 
 export async function releaseNumber(num: string) {
-  const { data } = await adminApi.post(`/numbers/${encodeURIComponent(num)}/release`);
+  const { data } = await adminApi.post("/pool/release", { number: num });
   return data;
 }
 
 // ─── System / Health ──────────────────────────────────────────────────────────
-export async function getSystemHealth() {
-  const { data } = await adminApi.get<SystemHealth>("/system/health");
-  return data;
+// The backend returns a FLAT health payload ({ postgres, redis, dlqDepth,
+// circuitBreakers, timestamp }). Normalize it into the nested SystemHealth shape
+// the console renders, and only report "healthy" when both datastores confirm ok.
+export async function getSystemHealth(): Promise<SystemHealth> {
+  const { data } = await adminApi.get<Record<string, unknown>>("/system/health");
+  const checks = (data.checks ?? {}) as { postgres?: string; redis?: string };
+  const postgres = (data.postgres ?? checks.postgres) as "ok" | "down" | undefined;
+  const redis = (data.redis ?? checks.redis) as "ok" | "down" | undefined;
+  const healthy = postgres === "ok" && redis === "ok";
+  return {
+    status: healthy ? "healthy" : "degraded",
+    checks: { postgres, redis },
+    circuitBreakers: (data.circuitBreakers as SystemHealth["circuitBreakers"]) ?? [],
+    dlqDepth: (data.dlqDepth as number) ?? 0,
+    timestamp: data.timestamp as string | undefined,
+  };
 }
 
 // ─── DLQ ──────────────────────────────────────────────────────────────────────
+export interface DlqSummary {
+  pending: number;
+  retrying: number;
+  resolved: number;
+  abandoned: number;
+}
+
 export async function listDlq(params: {
   status?: string;
   provider?: string;
   limit?: number;
   after?: string;
 } = {}) {
-  const { data } = await adminApi.get<PaginatedResponse<DlqEntry>>("/dlq", { params });
+  const { data } = await adminApi.get<PaginatedResponse<DlqEntry> & { summary?: DlqSummary }>(
+    "/dlq",
+    { params },
+  );
   return data;
 }
 
 export async function retryDlq(ids?: string[]) {
-  const { data } = await adminApi.post<{ retried: number }>("/dlq/retry", { ids });
+  // Backend responds { retrying: number }.
+  const { data } = await adminApi.post<{ retrying: number }>("/dlq/retry", { ids });
   return data;
 }
 
@@ -175,6 +208,14 @@ export async function createOperator(args: {
   password: string;
 }) {
   const { data } = await adminApi.post<Operator>("/operators", args);
+  return data;
+}
+
+export async function updateOperator(
+  id: string,
+  patch: { name?: string; role?: OperatorRole; isActive?: boolean; password?: string },
+) {
+  const { data } = await adminApi.patch<Operator>(`/operators/${id}`, patch);
   return data;
 }
 
@@ -206,8 +247,11 @@ export async function getAdminPricing() {
   return Array.isArray(data) ? data : data.tiers;
 }
 
-export async function patchPricing(row: Partial<PricingRow> & { tier: Tier; metric: string }) {
-  const { data } = await adminApi.patch("/pricing", row);
+export async function patchPricing(
+  id: string,
+  patch: { unitPrice?: number; includedQuantity?: number; overagePrice?: number | null },
+) {
+  const { data } = await adminApi.patch(`/pricing/${id}`, patch);
   return data;
 }
 
@@ -219,7 +263,8 @@ export async function getCpaasStatus() {
 }
 
 export async function forceCircuitState(provider: string, state: "CLOSED" | "OPEN") {
-  const { data } = await adminApi.post(`/cpaas/${provider}/force`, { state });
+  const suffix = state === "OPEN" ? "force-open" : "force-close";
+  const { data } = await adminApi.post(`/cpaas/${provider}/${suffix}`);
   return data;
 }
 

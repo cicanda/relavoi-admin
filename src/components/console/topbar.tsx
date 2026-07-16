@@ -25,8 +25,10 @@ export function Topbar() {
     refetchInterval: 30_000,
   });
 
-  const pg = health.data?.checks?.postgres ?? "ok";
-  const rd = health.data?.checks?.redis ?? "ok";
+  // Only show green when both datastores are explicitly confirmed ok — missing
+  // data means "unknown", which must NOT read as healthy.
+  const pg = health.data?.checks?.postgres ?? "unknown";
+  const rd = health.data?.checks?.redis ?? "unknown";
   const isHealthy = pg === "ok" && rd === "ok";
   const pillClass = isHealthy
     ? "bg-signal-500/15 text-signal-500"

@@ -118,6 +118,7 @@ export interface AuditEntry {
 }
 
 export interface PricingRow {
+  id: string;
   tier: Tier;
   metric: string;
   unitPrice: number;
@@ -125,6 +126,7 @@ export interface PricingRow {
   overagePrice?: number | null;
   currency: string;
   effectiveFrom?: string;
+  effectiveUntil?: string | null;
 }
 
 export interface PaginatedResponse<T> {

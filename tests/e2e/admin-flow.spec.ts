@@ -116,7 +116,7 @@ test.describe("Relavoi operator console — E2E", () => {
   // ─── number-pool admin action — quarantine + release (smoke) ───────────
   test("quarantine then release a proxy number via the API directly", async ({ request }) => {
     // Mint an operator JWT through the backend, then exercise the two endpoints.
-    const loginRes = await request.post("http://localhost:3000/v1/admin/auth/login", {
+    const loginRes = await request.post("http://localhost:8080/v1/admin/auth/login", {
       data: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD },
     });
     expect(loginRes.ok()).toBe(true);
@@ -126,7 +126,7 @@ test.describe("Relavoi operator console — E2E", () => {
     const number = "+2348000000010"; // last seeded dev number
 
     // Quarantine
-    const q = await request.post("http://localhost:3000/v1/admin/pool/quarantine", {
+    const q = await request.post("http://localhost:8080/v1/admin/pool/quarantine", {
       data: { number, reason: "E2E smoke test" },
       headers,
     });
@@ -136,7 +136,7 @@ test.describe("Relavoi operator console — E2E", () => {
     expect(["AVAILABLE", "IN_USE", "COOLDOWN"]).toContain(qBody.previousStatus);
 
     // Release
-    const r = await request.post("http://localhost:3000/v1/admin/pool/release", {
+    const r = await request.post("http://localhost:8080/v1/admin/pool/release", {
       data: { number },
       headers,
     });

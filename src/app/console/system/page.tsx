@@ -20,7 +20,7 @@ import type { SystemHealth } from "@/lib/types";
 
 const ENV_LABEL = process.env.NEXT_PUBLIC_ENV_LABEL ?? "ng-prod";
 const API_URL =
-  process.env.NEXT_PUBLIC_ADMIN_API_URL ?? "http://localhost:3000/v1/admin";
+  process.env.NEXT_PUBLIC_ADMIN_API_URL ?? "http://localhost:8080/v1/admin";
 const METRICS_URL = `${API_URL.replace(/\/v1\/admin\/?$/, "")}/metrics`;
 
 interface FlagRow {

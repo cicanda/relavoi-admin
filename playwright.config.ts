@@ -4,7 +4,7 @@ import { defineConfig, devices } from "@playwright/test";
  * E2E config for the Relavoi operator console.
  *
  * Assumes:
- *   - Backend is up at http://localhost:3000/v1
+ *   - Backend is up at http://localhost:8080/v1
  *   - Postgres + Redis are seeded (npm run seed in relavoi-backend)
  *
  * The admin dev server is started by Playwright via the `webServer` block.

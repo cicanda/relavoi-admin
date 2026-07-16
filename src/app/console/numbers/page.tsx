@@ -104,7 +104,7 @@ export default function NumbersPage() {
     staleTime: 30_000,
   });
 
-  const pool = data?.pool ?? [];
+  const pool = data?.pools ?? [];
   const numbers = data?.numbers ?? [];
   const totals = deriveTotals(data?.totals, pool, numbers);
 

@@ -78,10 +78,15 @@ export default function PricingPage() {
 
   const saveM = useMutation({
     mutationFn: async (
-      payloads: Array<Partial<PricingRow> & { tier: Tier; metric: string }>,
+      payloads: Array<{
+        id: string;
+        unitPrice?: number;
+        includedQuantity?: number;
+        overagePrice?: number | null;
+      }>,
     ) => {
       const results = await Promise.allSettled(
-        payloads.map((p) => patchPricing(p)),
+        payloads.map(({ id, ...patch }) => patchPricing(id, patch)),
       );
       return results;
     },
@@ -136,12 +141,16 @@ export default function PricingPage() {
 
   async function saveTier(tier: Tier) {
     const tierRows = byTier[tier];
-    const payloads: Array<Partial<PricingRow> & { tier: Tier; metric: string }> =
-      [];
+    const payloads: Array<{
+      id: string;
+      unitPrice?: number;
+      includedQuantity?: number;
+      overagePrice?: number | null;
+    }> = [];
     tierRows.forEach((row) => {
       const draft = drafts[rowKey(tier, row.metric)];
       if (!draft) return;
-      const dirty: Partial<PricingRow> = {};
+      const dirty: { unitPrice?: number; includedQuantity?: number; overagePrice?: number | null } = {};
       if (
         draft.unitPrice !== undefined &&
         draft.unitPrice !== row.unitPrice
@@ -161,7 +170,7 @@ export default function PricingPage() {
         dirty.overagePrice = draft.overagePrice;
       }
       if (Object.keys(dirty).length > 0) {
-        payloads.push({ tier, metric: row.metric, ...dirty });
+        payloads.push({ id: row.id, ...dirty });
       }
     });
 

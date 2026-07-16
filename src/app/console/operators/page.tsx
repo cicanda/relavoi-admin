@@ -14,6 +14,7 @@ import {
   deactivateOperator,
   deleteOperator,
   listOperators,
+  updateOperator,
 } from "@/lib/api";
 import { fmtRelative } from "@/lib/format";
 import type { Operator, OperatorRole } from "@/lib/types";
@@ -328,8 +329,8 @@ function AddOperatorModal({
       toast.error("Missing fields", "Name, email, and password are required.");
       return;
     }
-    if (password.length < 8) {
-      toast.error("Weak password", "Use at least 8 characters.");
+    if (password.length < 12) {
+      toast.error("Weak password", "Use at least 12 characters.");
       return;
     }
     setBusy(true);
@@ -377,9 +378,9 @@ function AddOperatorModal({
           label="Password"
           hint={
             password.length === 0
-              ? "≥8 chars"
-              : password.length < 8
-                ? `${password.length}/8 chars — too short`
+              ? "≥12 chars"
+              : password.length < 12
+                ? `${password.length}/12 chars — too short`
                 : "✓ length looks ok"
           }
         >
@@ -426,20 +427,14 @@ function EditOperatorModal({
   const [busy, setBusy] = useState(false);
 
   const updateM = useMutation({
-    // Note: backend update-role endpoint isn't surfaced in the api module yet,
-    // so we treat this as a "coming soon" affordance.
-    mutationFn: async () => {
-      throw Object.assign(new Error("not implemented"), {
-        isAxiosError: true,
-        response: { status: 404 },
-      });
-    },
-    onError: () => {
-      toast.info(
-        "Endpoint coming soon",
-        "Operator role updates are not yet wired on the backend.",
-      );
+    mutationFn: () => updateOperator(operator.id, { role }),
+    onSuccess: () => {
+      toast.success("Operator updated", `Role set to ${role}.`);
       onClose();
+    },
+    onError: (err: unknown) => {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      toast.error("Update failed", msg);
     },
   });
 
