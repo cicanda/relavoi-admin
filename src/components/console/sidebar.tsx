@@ -6,6 +6,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useAdminAuth, clearPersistedAdminToken } from "@/lib/auth-store";
 import { getOverview, listTenants } from "@/lib/api";
 import { BrandMark } from "@/components/brand-mark";
+import { useSidebar } from "@/lib/sidebar-store";
+import { useEffect, useState } from "react";
 import { RolePill } from "@/components/state-pill";
 import {
   LayoutDashboard,
@@ -69,6 +71,24 @@ const NAV: NavGroup[] = [
 ];
 
 export function Sidebar() {
+  const { open, collapsed, closeSidebar } = useSidebar();
+  const isDesktop = useIsDesktop();
+
+  // Escape closes the overlay; lock the page behind it while it is covered.
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") closeSidebar();
+    }
+    window.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [open, closeSidebar]);
+
   const path = usePathname();
   const { operator } = useAdminAuth();
   const envLabel = process.env.NEXT_PUBLIC_ENV_LABEL ?? "ng-prod";
@@ -107,7 +127,27 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="w-60 bg-ink-800 border-r border-ink-700 flex flex-col h-screen flex-shrink-0">
+    <>
+      {open && (
+        <div
+          onClick={closeSidebar}
+          aria-hidden="true"
+          className="fixed inset-0 z-40 bg-ink-950/60 lg:hidden"
+        />
+      )}
+
+      <aside
+        data-open={open ? "true" : "false"}
+        // Below lg the panel slides over the content; from lg it is an in-flow
+        // column and must carry no transform at all.
+        style={isDesktop ? undefined : { transform: open ? "translateX(0)" : "translateX(-100%)" }}
+        className={[
+          "sidebar-panel",
+          "fixed inset-y-0 left-0 z-50 w-[17rem] flex flex-col bg-ink-800 border-r border-ink-700",
+          "lg:static lg:z-auto lg:h-screen lg:flex-shrink-0",
+          collapsed ? "lg:w-16" : "lg:w-60",
+        ].join(" ")}
+      >
       {/* Brand */}
       <div className="px-4 py-4 border-b border-ink-700 flex items-center gap-3">
         <BrandMark size={36} />
@@ -133,15 +173,19 @@ export function Sidebar() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-2.5 px-2 py-1.5 rounded-md text-[13px] transition-colors relative ${
+                    onClick={closeSidebar}
+                    title={collapsed ? item.label : undefined}
+                    className={`flex items-center gap-2.5 rounded-md text-[13px] transition-colors relative min-h-[44px] lg:min-h-0 px-2 py-2.5 lg:py-1.5 ${
+                      collapsed ? "lg:justify-center lg:px-0" : ""
+                    } ${
                       active
                         ? "bg-ink-900/70 text-paper font-medium"
                         : "text-ink-300 hover:bg-ink-900/40 hover:text-paper"
                     }`}
                   >
                     {active && <span className="absolute left-0 top-1.5 bottom-1.5 w-[2px] bg-signal-500 rounded-r-full" />}
-                    <Icon className={`w-4 h-4 ${active ? "text-paper" : "text-ink-500"}`} />
-                    <span className="flex-1">{item.label}</span>
+                    <Icon className={`w-4 h-4 flex-shrink-0 ${active ? "text-paper" : "text-ink-500"}`} />
+                    <span className={`flex-1 ${collapsed ? "lg:hidden" : ""}`}>{item.label}</span>
                     {showCount && (
                       <span
                         className={`text-[10px] font-mono font-medium px-1.5 py-0.5 rounded-md ${
@@ -179,10 +223,27 @@ export function Sidebar() {
           <LogOut className="w-4 h-4" />
         </button>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }
 
 function initials(s: string): string {
   return s.split(/[\s@]/).map((p) => p[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
+}
+
+/**
+ * True at the lg breakpoint and above. Starts false so the server-rendered
+ * markup is the mobile, closed state.
+ */
+function useIsDesktop(): boolean {
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const sync = () => setIsDesktop(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+  return isDesktop;
 }

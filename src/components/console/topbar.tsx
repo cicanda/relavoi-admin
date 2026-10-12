@@ -1,11 +1,13 @@
 "use client";
 
-import { Bell, Search } from "lucide-react";
+import { Bell, Menu, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getSystemHealth } from "@/lib/api";
+import { useSidebar } from "@/lib/sidebar-store";
 
 export function Topbar() {
+  const { collapsed, openSidebar, toggleCollapsed } = useSidebar();
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -37,7 +39,26 @@ export function Topbar() {
   const label = isHealthy ? "Live" : "Degraded";
 
   return (
-    <header className="h-[52px] bg-ink-800 border-b border-ink-700 px-4 flex items-center gap-4 flex-shrink-0">
+    <header className="h-[52px] bg-ink-800 border-b border-ink-700 px-3 sm:px-4 flex items-center gap-2 sm:gap-4 flex-shrink-0">
+      {/* Two buttons rather than one branching on viewport width: the breakpoint
+          is a CSS concern and window.innerWidth is not safe to read in render. */}
+      <button
+        type="button"
+        onClick={openSidebar}
+        aria-label="Open navigation"
+        className="lg:hidden -ml-1 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-ink-300 hover:text-paper hover:bg-ink-900/50 rounded-md transition-colors"
+      >
+        <Menu className="w-5 h-5" />
+      </button>
+      <button
+        type="button"
+        onClick={toggleCollapsed}
+        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        className="hidden lg:flex -ml-1 p-2 items-center justify-center text-ink-300 hover:text-paper hover:bg-ink-900/50 rounded-md transition-colors"
+      >
+        {collapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+      </button>
       <div className="relative flex-1 max-w-md">
         <Search className="w-3.5 h-3.5 text-ink-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
         <input

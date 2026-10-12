@@ -81,3 +81,12 @@ select option { color: var(--color-ink-900); }
 ::-webkit-scrollbar-track { background: var(--color-ink-900); }
 ::-webkit-scrollbar-thumb { background: var(--color-ink-700); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-ink-600); }
+
+/* ── Mobile sidebar ────────────────────────────────────────────────────────
+   Only the transition lives here. The offset itself is set inline by the
+   component, gated on a matchMedia check, because every CSS-only form of the
+   toggle lost the cascade to Tailwind v4's utility layers. One inline
+   declaration cannot be overridden by anything. */
+.sidebar-panel {
+  transition: transform 200ms ease-in-out;
+}
