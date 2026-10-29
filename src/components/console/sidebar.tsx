@@ -21,6 +21,7 @@ import {
   ScrollText,
   Users,
   Cpu,
+  ShieldCheck,
   LogOut,
 } from "lucide-react";
 
@@ -42,6 +43,7 @@ const NAV: NavGroup[] = [
     items: [
       { label: "Overview", href: "/console/overview", icon: LayoutDashboard },
       { label: "Tenants", href: "/console/tenants", icon: Building2, badge: "tenants" },
+      { label: "Verification", href: "/console/verification", icon: ShieldCheck },
       { label: "Number Pool", href: "/console/numbers", icon: Hash },
       { label: "Sessions", href: "/console/sessions", icon: Activity },
     ],

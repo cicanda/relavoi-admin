@@ -17,10 +17,13 @@ import { PageHeader } from "@/components/page-header";
 import { StatePill } from "@/components/state-pill";
 import { Skeleton, SkeletonRow } from "@/components/skeleton";
 import { useToast } from "@/components/toast";
+import { ConfirmDialog } from "@/components/console/confirm-dialog";
+import { KybPanel } from "@/components/console/kyb-panel";
 import {
   getTenant,
   listAdminSessions,
   listAudit,
+  updateTenantStatus,
   updateTenantTier,
 } from "@/lib/api";
 import { fmtAbsolute, fmtRelative, truncId } from "@/lib/format";
@@ -28,6 +31,17 @@ import { useAdminAuth } from "@/lib/auth-store";
 import type { AuditEntry, Session, Tenant, Tier } from "@/lib/types";
 
 const TIERS: Tier[] = ["STARTER", "GROWTH", "ENTERPRISE"];
+type TenantStatus = "ACTIVE" | "SUSPENDED" | "CANCELLED";
+const STATUSES: TenantStatus[] = ["ACTIVE", "SUSPENDED", "CANCELLED"];
+// What each one actually does to the tenant, shown in the confirm dialog so
+// the consequence is on screen at the moment of deciding.
+const STATUS_EFFECT: Record<TenantStatus, string> = {
+  ACTIVE: "Restores API access. Existing keys and tokens work again immediately.",
+  SUSPENDED:
+    "Refuses every API request and token exchange within about a minute. Calls already bridged stay up; no new session can be created.",
+  CANCELLED:
+    "Refuses every API request, the same as suspended, and marks the workspace closed. Use this when the customer has left.",
+};
 const CONSENT_MODES = ["DEFAULT", "CUSTOM", "NONE"] as const;
 const EXPIRED_BEHAVIORS = ["DEAD_LINE", "REDIRECT_SUPPORT", "PLAY_MESSAGE"] as const;
 
@@ -93,6 +107,7 @@ export default function TenantDetailPage({
 
   const [form, setForm] = useState<TenantFormState>(() => initialForm());
   const [copied, setCopied] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<TenantStatus | null>(null);
 
   // Hydrate form once the tenant lands.
   useEffect(() => {
@@ -106,17 +121,31 @@ export default function TenantDetailPage({
     },
   });
 
+  const statusMutation = useMutation({
+    mutationFn: (status: TenantStatus) => updateTenantStatus(id, status),
+    onSuccess: (_data, status) => {
+      toast.success("Status updated", `Workspace is now ${status}.`);
+      setPendingStatus(null);
+      void queryClient.invalidateQueries({ queryKey: ["tenant", id] });
+      void queryClient.invalidateQueries({ queryKey: ["tenants"] });
+    },
+    onError: (err: unknown) => {
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data
+        ?.detail;
+      toast.error("Could not change status", detail ?? "Try again.");
+    },
+  });
+
   async function onSave() {
     if (!tenant) return;
     try {
       const tierChanged = form.tier !== tenant.tier;
-      if (tierChanged) {
-        await tierMutation.mutateAsync(form.tier);
-        toast.success("Tier updated", `Tenant moved to ${form.tier}.`);
+      if (!tierChanged) {
+        toast.info("Nothing to save", "Tier is the only field this console can change.");
+        return;
       }
-      toast.info(
-        "Bulk tenant config update endpoint coming soon — only tier was applied.",
-      );
+      await tierMutation.mutateAsync(form.tier);
+      toast.success("Tier updated", `Tenant moved to ${form.tier}.`);
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data
@@ -185,7 +214,28 @@ export default function TenantDetailPage({
             </h1>
             <div className="mt-2 flex items-center flex-wrap gap-2">
               <TierPill tier={tenant.tier} />
-              {tenant.status && <StatePill state={tenant.status} size="sm" />}
+              {/* Status is a control, not a label: suspending a workspace is an
+                  operator action that belongs where the status is read. */}
+              {canEdit ? (
+                <select
+                  value={(tenant.status ?? "ACTIVE") as TenantStatus}
+                  disabled={statusMutation.isPending}
+                  onChange={(e) => {
+                    const next = e.target.value as TenantStatus;
+                    if (next !== (tenant.status ?? "ACTIVE")) setPendingStatus(next);
+                  }}
+                  aria-label="Workspace status"
+                  className="bg-ink-900 border border-ink-700 text-ink-200 text-[12px] h-7 rounded-md px-2 focus:outline-none focus:border-ink-500 transition-colors disabled:opacity-50"
+                >
+                  {STATUSES.map((st) => (
+                    <option key={st} value={st}>
+                      {st}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                tenant.status && <StatePill state={tenant.status} size="sm" />
+              )}
               {tenant.billingEmail && (
                 <span className="text-xs text-ink-400">{tenant.billingEmail}</span>
               )}
@@ -205,6 +255,10 @@ export default function TenantDetailPage({
           </div>
         </div>
       </div>
+
+      {/* Business verification: the gate on live mode, and dense enough to want
+          the full width, so it sits above the card grid rather than in it. */}
+      <KybPanel tenantId={id} canDecide={canEdit} />
 
       {/* 2x2 grid of cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -455,6 +509,23 @@ export default function TenantDetailPage({
           </table>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={pendingStatus !== null}
+        title={`Set this workspace to ${pendingStatus ?? ""}?`}
+        danger={pendingStatus !== "ACTIVE"}
+        description={
+          <>
+            <span className="text-paper">{tenant.name}</span> is currently{" "}
+            {tenant.status ?? "ACTIVE"}.{" "}
+            {pendingStatus ? STATUS_EFFECT[pendingStatus] : ""}
+          </>
+        }
+        confirmLabel={pendingStatus === "ACTIVE" ? "Reactivate" : `Set ${pendingStatus ?? ""}`}
+        busy={statusMutation.isPending}
+        onCancel={() => setPendingStatus(null)}
+        onConfirm={() => pendingStatus && statusMutation.mutate(pendingStatus)}
+      />
     </>
   );
 }

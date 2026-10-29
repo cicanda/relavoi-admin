@@ -317,3 +317,107 @@ export async function getOverview(): Promise<AdminOverview> {
     poolUtilization,
   };
 }
+
+// ─── Business verification (KYB) ──────────────────────────────────────────────
+
+export type KybStatus = "NOT_SUBMITTED" | "PENDING" | "APPROVED" | "REJECTED";
+
+export type KybDocumentKind =
+  | "REGISTRATION_CERTIFICATE"
+  | "STATUS_REPORT"
+  | "MEMART"
+  | "OWNER_ID"
+  | "PROOF_OF_ADDRESS"
+  | "OTHER";
+
+export interface KybDocument {
+  id: string;
+  kind: KybDocumentKind;
+  filename: string;
+  contentType: string;
+  sizeBytes: number;
+  sha256: string;
+  uploadedAt: string;
+}
+
+export interface KybQueueRow {
+  tenantId: string;
+  workspaceName: string;
+  legalName: string | null;
+  registrationType: "COMPANY" | "BUSINESS_NAME" | "OTHER" | null;
+  registrationNumber: string | null;
+  kybStatus: KybStatus;
+  submittedAt: string | null;
+  mode: "sandbox" | "live";
+  tier: Tier;
+  documentCount: number;
+}
+
+export interface KybTenantDetail {
+  tenantId: string;
+  workspaceName: string;
+  mode: "sandbox" | "live";
+  status: KybStatus;
+  details: {
+    registrationType: "COMPANY" | "BUSINESS_NAME" | "OTHER" | null;
+    legalName: string | null;
+    registrationNumber: string | null;
+    registeredAddress: string | null;
+    city: string | null;
+    state: string | null;
+    contactName: string | null;
+    contactPhone: string | null;
+    website: string | null;
+  };
+  documents: KybDocument[];
+  missingKinds: KybDocumentKind[];
+  missingDetails: string[];
+  submittedAt: string | null;
+  reviewedAt: string | null;
+  reviewedBy: { id: string; email: string } | null;
+  rejectionReason: string | null;
+}
+
+export async function listKybQueue(status: KybStatus = "PENDING", limit = 50) {
+  const { data } = await adminApi.get<{ status: KybStatus; data: KybQueueRow[] }>("/kyb", {
+    params: { status, limit },
+  });
+  return data;
+}
+
+export async function getTenantKyb(tenantId: string) {
+  const { data } = await adminApi.get<KybTenantDetail>(`/tenants/${tenantId}/kyb`);
+  return data;
+}
+
+/**
+ * A short-lived presigned URL for one document. Deliberately fetched on demand
+ * rather than alongside the list: issuing a URL is an audited access to someone
+ * else's identity document, so it happens only when an operator asks for it.
+ */
+export async function getKybDocumentUrl(documentId: string) {
+  const { data } = await adminApi.get<{
+    url: string;
+    expiresAt: string;
+    expiresInSeconds: number;
+    filename: string;
+    contentType: string;
+  }>(`/kyb/documents/${documentId}/url`);
+  return data;
+}
+
+export async function approveTenantKyb(tenantId: string) {
+  const { data } = await adminApi.post<{ tenantId: string; status: KybStatus }>(
+    `/tenants/${tenantId}/kyb/approve`,
+  );
+  return data;
+}
+
+export async function rejectTenantKyb(tenantId: string, reason: string) {
+  const { data } = await adminApi.post<{
+    tenantId: string;
+    status: KybStatus;
+    rejectionReason: string;
+  }>(`/tenants/${tenantId}/kyb/reject`, { reason });
+  return data;
+}
