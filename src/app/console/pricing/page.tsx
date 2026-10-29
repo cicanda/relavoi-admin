@@ -10,7 +10,7 @@ import { useAdminAuth } from "@/lib/auth-store";
 import { getAdminPricing, patchPricing } from "@/lib/api";
 import type { PricingRow, Tier } from "@/lib/types";
 
-const TIERS: Tier[] = ["STARTER", "GROWTH", "ENTERPRISE"];
+const TIERS: Tier[] = ["STARTER", "GROWTH", "SCALE", "ENTERPRISE"];
 
 const TIER_META: Record<
   Tier,
@@ -23,6 +23,10 @@ const TIER_META: Record<
   GROWTH: {
     subtitle: "Production-ready · 1,000 sessions",
     accentDot: "bg-sky-500",
+  },
+  SCALE: {
+    subtitle: "High-volume · 4,000 sessions",
+    accentDot: "bg-violet-500",
   },
   ENTERPRISE: {
     subtitle: "High-volume · 10,000 sessions",
@@ -62,6 +66,7 @@ export default function PricingPage() {
     const map: Record<Tier, PricingRow[]> = {
       STARTER: [],
       GROWTH: [],
+      SCALE: [],
       ENTERPRISE: [],
     };
     rows.forEach((r) => {

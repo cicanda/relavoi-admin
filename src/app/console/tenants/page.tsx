@@ -14,7 +14,7 @@ import type { Tenant, Tier } from "@/lib/types";
 type SortKey = "name" | "billingEmail" | "createdAt";
 type SortDir = "asc" | "desc";
 
-const TIER_OPTIONS: Array<Tier | "ALL"> = ["ALL", "STARTER", "GROWTH", "ENTERPRISE"];
+const TIER_OPTIONS: Array<Tier | "ALL"> = ["ALL", "STARTER", "GROWTH", "SCALE", "ENTERPRISE"];
 
 export default function TenantsListPage() {
   const router = useRouter();

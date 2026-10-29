@@ -82,8 +82,10 @@ export function TierPill({ tier }: { tier: Tier }) {
   const cfg =
     tier === "ENTERPRISE"
       ? "bg-signal-500/15 text-signal-800"
-      : tier === "GROWTH"
-        ? "bg-sky-500/12 text-sky-800"
-        : "bg-mute text-fg-2";
+      : tier === "SCALE"
+        ? "bg-violet-500/12 text-violet-800"
+        : tier === "GROWTH"
+          ? "bg-sky-500/12 text-sky-800"
+          : "bg-mute text-fg-2";
   return <span className={`badge badge-sm flex-shrink-0 ${cfg}`}>{tier}</span>;
 }

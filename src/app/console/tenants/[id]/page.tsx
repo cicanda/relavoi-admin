@@ -30,7 +30,7 @@ import { fmtAbsolute, fmtRelative, truncId } from "@/lib/format";
 import { useAdminAuth } from "@/lib/auth-store";
 import type { AuditEntry, Session, Tenant, Tier } from "@/lib/types";
 
-const TIERS: Tier[] = ["STARTER", "GROWTH", "ENTERPRISE"];
+const TIERS: Tier[] = ["STARTER", "GROWTH", "SCALE", "ENTERPRISE"];
 type TenantStatus = "ACTIVE" | "SUSPENDED" | "CANCELLED";
 const STATUSES: TenantStatus[] = ["ACTIVE", "SUSPENDED", "CANCELLED"];
 // What each one actually does to the tenant, shown in the confirm dialog so

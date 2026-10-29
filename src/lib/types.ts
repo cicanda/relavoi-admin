@@ -2,7 +2,7 @@
 // emitted by the relavoi-backend admin routes. Most fields are optional so the
 // console renders gracefully if a particular column is missing.
 
-export type Tier = "STARTER" | "GROWTH" | "ENTERPRISE";
+export type Tier = "STARTER" | "GROWTH" | "SCALE" | "ENTERPRISE";
 export type OperatorRole = "ROOT" | "SRE" | "SUPPORT" | "VIEWER";
 export type SessionState =
   | "PENDING"
