@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useAdminAuth, clearPersistedAdminToken } from "@/lib/auth-store";
 import { getOverview, listTenants } from "@/lib/api";
-import { BrandMark } from "@/components/brand-mark";
+import { BrandLogo, BrandMark } from "@/components/brand-mark";
 import { useSidebar } from "@/lib/sidebar-store";
 import { useEffect, useState } from "react";
 import { RolePill } from "@/components/state-pill";
@@ -151,11 +151,13 @@ export function Sidebar() {
         ].join(" ")}
       >
       {/* Brand */}
-      <div className="px-4 py-4 border-b border-ink-700 flex items-center gap-3">
-        <BrandMark size={36} />
-        <div className="min-w-0">
-          <div className="text-sm font-semibold text-paper leading-tight">Relavoi</div>
-          <div className="text-[11px] font-mono text-ink-500 uppercase tracking-wider truncate">{envLabel}</div>
+      <div className={`px-4 py-4 border-b border-ink-700 ${collapsed ? "lg:px-0 lg:flex lg:justify-center" : ""}`}>
+        <div className={collapsed ? "hidden lg:block" : "hidden"}>
+          <BrandMark size={32} />
+        </div>
+        <div className={`min-w-0 ${collapsed ? "lg:hidden" : ""}`}>
+          <BrandLogo height={30} />
+          <div className="mt-1.5 text-[11px] font-mono text-ink-500 uppercase tracking-wider truncate">{envLabel}</div>
         </div>
       </div>
 

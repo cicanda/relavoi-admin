@@ -4,7 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import axios from "axios";
-import { BrandMark } from "@/components/brand-mark";
+import { BrandLogo } from "@/components/brand-mark";
 import { useAdminAuth } from "@/lib/auth-store";
 import { adminLogin } from "@/lib/api";
 
@@ -55,9 +55,9 @@ export default function OperatorLoginPage() {
     <div className="min-h-screen w-full bg-ink-900 flex items-center justify-center px-4">
       <div className="bg-ink-800 border border-ink-700 max-w-md w-full p-8 rounded-[10px] shadow-card">
         <div className="flex flex-col items-center text-center mb-6">
-          <BrandMark size={44} />
-          <h1 className="mt-4 text-2xl font-semibold text-paper tracking-tight">Relavoi</h1>
-          <p className="text-sm text-ink-400 mt-1">Operator Console</p>
+          <h1 className="sr-only">Relavoi</h1>
+          <BrandLogo height={48} />
+          <p className="text-sm text-ink-400 mt-3">Operator Console</p>
         </div>
 
         <form onSubmit={onSubmit} className="space-y-4">
