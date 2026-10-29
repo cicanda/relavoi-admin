@@ -180,7 +180,7 @@ export default function NumbersPage() {
           <button
             onClick={() => refetch()}
             disabled={isFetching}
-            className="bg-ink-800 border border-ink-700 text-paper px-3 h-9 rounded-md hover:bg-ink-700 text-sm inline-flex items-center gap-2"
+            className="btn btn-secondary"
           >
             <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
             Refresh
@@ -189,7 +189,8 @@ export default function NumbersPage() {
       />
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+      <div className="bento mb-[var(--gap)]">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-1.5 [&>*:last-child]:col-span-2 md:[&>*:last-child]:col-span-1">
         <StatCard label="Total" value={fmtNumber(totals.total)} icon={Hash} loading={isLoading} />
         <StatCard
           label="Available"
@@ -220,28 +221,29 @@ export default function NumbersPage() {
           loading={isLoading}
         />
       </div>
+      </div>
 
       {/* Utilization */}
-      <div className="bg-ink-800 border border-ink-700 rounded-[10px] shadow-card p-4 mb-6">
-        <div className="flex items-center justify-between mb-3">
-          <div className="text-[11px] font-mono uppercase tracking-wider text-ink-400">
+      <div className="card card-pad mb-[var(--gap)]">
+        <div className="flex items-end justify-between gap-4 mb-4">
+          <div className="eyebrow text-fg-2">
             Pool Utilization
           </div>
-          <div className="text-sm font-mono text-paper tabular-nums">{utilPct}%</div>
+          <div className="text-[length:var(--text-stat)] font-light text-fg tabular-nums tracking-[-0.04em] leading-none">{utilPct}%</div>
         </div>
-        <div className="bg-ink-700 h-3 rounded-full overflow-hidden">
+        <div className="bg-mute h-2.5 rounded-full overflow-hidden">
           <div
-            className={`h-full ${fillColor} transition-all`}
+            className={`h-full rounded-full ${fillColor} transition-all duration-700`}
             style={{ width: `${Math.min(utilPct, 100)}%` }}
           />
         </div>
-        <div className="mt-3 flex flex-col gap-0.5">
-          <div className="text-sm text-ink-200">
+        <div className="mt-4 flex flex-col gap-1">
+          <div className="text-sm text-fg">
             <span className="font-mono tabular-nums">{fmtNumber(totals.inUse)}</span> of{" "}
             <span className="font-mono tabular-nums">{fmtNumber(totals.total)}</span> numbers in
             use ({utilPct}%)
           </div>
-          <div className="text-xs text-ink-500">
+          <div className="text-xs text-fg-3">
             <span className="font-mono tabular-nums">{fmtNumber(totals.available)}</span> available,{" "}
             <span className="font-mono tabular-nums">{fmtNumber(totals.cooldown)}</span> in cooldown
           </div>
@@ -249,7 +251,7 @@ export default function NumbersPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-ink-800 border border-ink-700 rounded-[10px] shadow-card p-4 mb-6 space-y-3">
+      <div className="card card-pad mb-[var(--gap)] space-y-4">
         <FilterRow
           label="Status"
           options={[
@@ -285,34 +287,18 @@ export default function NumbersPage() {
       </div>
 
       {/* Numbers table */}
-      <div className="bg-ink-800 border border-ink-700 rounded-[10px] shadow-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
+      <div className="card overflow-hidden">
+        <div className="table-scroll">
+          <table className="data-table">
             <thead>
               <tr>
-                <th className="bg-ink-900 px-4 py-2 text-[11px] font-mono uppercase tracking-wider text-ink-500 text-left">
-                  Number
-                </th>
-                <th className="bg-ink-900 px-4 py-2 text-[11px] font-mono uppercase tracking-wider text-ink-500 text-left">
-                  Region
-                </th>
-                <th className="bg-ink-900 px-4 py-2 text-[11px] font-mono uppercase tracking-wider text-ink-500 text-left">
-                  Provider
-                </th>
-                <th className="bg-ink-900 px-4 py-2 text-[11px] font-mono uppercase tracking-wider text-ink-500 text-left">
-                  Status
-                </th>
-                <th className="bg-ink-900 px-4 py-2 text-[11px] font-mono uppercase tracking-wider text-ink-500 text-left">
-                  Last Used
-                </th>
-                <th className="bg-ink-900 px-4 py-2 text-[11px] font-mono uppercase tracking-wider text-ink-500 text-left">
-                  Health Check
-                </th>
-                {canManage && (
-                  <th className="bg-ink-900 px-4 py-2 text-[11px] font-mono uppercase tracking-wider text-ink-500 text-right">
-                    Actions
-                  </th>
-                )}
+                <th>Number</th>
+                <th>Region</th>
+                <th>Provider</th>
+                <th>Status</th>
+                <th>Last Used</th>
+                <th>Health Check</th>
+                {canManage && <th className="text-right">Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -322,12 +308,12 @@ export default function NumbersPage() {
                 ))
               ) : filteredNumbers.length === 0 ? (
                 <tr>
-                  <td colSpan={canManage ? 7 : 6} className="px-4 py-12 border-t border-ink-700">
+                  <td colSpan={canManage ? 7 : 6} className="py-12">
                     <div className="flex flex-col items-center justify-center text-center">
-                      <div className="w-12 h-12 rounded-md bg-ink-900 flex items-center justify-center mb-3">
-                        <Hash className="w-5 h-5 text-ink-500" />
+                      <div className="empty-icon mb-3">
+                        <Hash className="w-5 h-5 text-fg-3" />
                       </div>
-                      <div className="text-sm text-ink-300">No numbers provisioned yet</div>
+                      <div className="text-[15px] text-fg">No numbers provisioned yet</div>
                     </div>
                   </td>
                 </tr>
@@ -336,34 +322,34 @@ export default function NumbersPage() {
                   const canQuarantine = n.status === "AVAILABLE" || n.status === "IN_USE";
                   const canRelease = n.status === "COOLDOWN" || n.status === "QUARANTINED";
                   return (
-                    <tr key={n.number} className="hover:bg-ink-900/60">
-                      <td className="px-4 py-3 border-t border-ink-700 text-[13px] text-paper font-mono">
+                    <tr key={n.number}>
+                      <td className="font-mono whitespace-nowrap">
                         {n.number}
                       </td>
-                      <td className="px-4 py-3 border-t border-ink-700 text-[13px] text-ink-200 lowercase">
+                      <td className="lowercase whitespace-nowrap">
                         {n.region ?? "—"}
                       </td>
-                      <td className="px-4 py-3 border-t border-ink-700 text-[13px] text-ink-200 font-mono uppercase">
+                      <td className="font-mono uppercase">
                         {n.provider}
                       </td>
-                      <td className="px-4 py-3 border-t border-ink-700 text-[13px]">
+                      <td>
                         <StatePill state={n.status} />
                       </td>
-                      <td className="px-4 py-3 border-t border-ink-700 text-[13px] text-ink-200">
+                      <td className="text-fg-2 whitespace-nowrap">
                         {fmtRelative(n.lastUsedAt)}
                       </td>
-                      <td className="px-4 py-3 border-t border-ink-700 text-[13px] text-ink-200">
+                      <td className="text-fg-2 whitespace-nowrap">
                         {fmtRelative(n.healthCheckAt)}
                       </td>
                       {canManage && (
-                        <td className="px-4 py-3 border-t border-ink-700 text-right">
+                        <td className="text-right">
                           {canQuarantine ? (
                             <button
                               onClick={() => {
                                 setConfirmAction({ kind: "quarantine", number: n.number });
                                 setReason("");
                               }}
-                              className="bg-ink-800 border border-ink-700 text-paper px-3 h-8 rounded-md hover:bg-ink-700 text-xs inline-flex items-center gap-1.5"
+                              className="btn btn-secondary btn-sm"
                             >
                               <Lock className="w-3 h-3" />
                               Quarantine
@@ -373,12 +359,12 @@ export default function NumbersPage() {
                               onClick={() => {
                                 setConfirmAction({ kind: "release", number: n.number });
                               }}
-                              className="bg-ink-800 border border-ink-700 text-paper px-3 h-8 rounded-md hover:bg-ink-700 text-xs inline-flex items-center gap-1.5"
+                              className="btn btn-secondary btn-sm"
                             >
                               Release
                             </button>
                           ) : (
-                            <span className="text-ink-500 text-xs">—</span>
+                            <span className="text-fg-3 text-xs">—</span>
                           )}
                         </td>
                       )}
@@ -393,17 +379,17 @@ export default function NumbersPage() {
 
       {/* Confirm modal */}
       {confirmAction && (
-        <div className="fixed inset-0 z-50 bg-ink-900/70 flex items-center justify-center p-4">
-          <div className="bg-ink-800 border border-ink-700 rounded-[10px] shadow-card p-6 w-full max-w-md">
-            <h2 className="text-lg font-semibold text-paper mb-1">
+        <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="number-action-title">
+          <div className="modal">
+            <h2 id="number-action-title" className="modal-title">
               {confirmAction.kind === "quarantine" ? "Quarantine number" : "Release number"}
             </h2>
-            <p className="text-sm text-ink-400 mb-4">
-              <span className="font-mono text-ink-200">{confirmAction.number}</span>
+            <p className="text-sm text-fg-2 mt-1 mb-5">
+              <span className="font-mono text-fg">{confirmAction.number}</span>
             </p>
             {confirmAction.kind === "quarantine" && (
-              <div className="mb-4">
-                <label className="block text-[11px] font-mono uppercase tracking-wider text-ink-400 mb-1.5">
+              <div className="mb-5">
+                <label className="field-label eyebrow">
                   Reason
                 </label>
                 <textarea
@@ -411,18 +397,18 @@ export default function NumbersPage() {
                   onChange={(e) => setReason(e.target.value)}
                   rows={3}
                   placeholder="e.g. abuse report, health check failures"
-                  className="w-full px-3 py-2 bg-ink-900 border border-ink-700 text-paper rounded-md text-[13px] focus:outline-none focus:border-signal-500 focus:ring-1 focus:ring-signal-500/30"
+                  className="field w-full"
                 />
               </div>
             )}
-            <div className="flex items-center justify-end gap-2">
+            <div className="modal-actions">
               <button
                 onClick={() => {
                   setConfirmAction(null);
                   setReason("");
                 }}
                 disabled={busy}
-                className="bg-ink-800 border border-ink-700 text-paper px-3 h-9 rounded-md hover:bg-ink-700 text-sm"
+                className="btn btn-secondary"
               >
                 Cancel
               </button>
@@ -430,7 +416,7 @@ export default function NumbersPage() {
                 <button
                   onClick={handleQuarantine}
                   disabled={busy}
-                  className="bg-rose-500/15 text-rose-400 border border-rose-500/30 px-4 h-9 rounded-md hover:bg-rose-500/25 text-sm disabled:opacity-50"
+                  className="btn btn-danger-soft"
                 >
                   {busy ? "Quarantining…" : "Confirm Quarantine"}
                 </button>
@@ -438,7 +424,7 @@ export default function NumbersPage() {
                 <button
                   onClick={handleRelease}
                   disabled={busy}
-                  className="bg-signal-500 text-ink-900 px-4 h-9 rounded-md font-medium hover:bg-signal-600 text-sm disabled:opacity-50"
+                  className="btn btn-accent"
                 >
                   {busy ? "Releasing…" : "Confirm Release"}
                 </button>
@@ -463,22 +449,20 @@ function FilterRow({
   onChange: (v: string) => void;
 }) {
   return (
-    <div className="flex items-center gap-3">
-      <div className="text-[11px] font-mono uppercase tracking-wider text-ink-500 w-20 flex-shrink-0">
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4 min-w-0">
+      <div className="eyebrow text-fg-3 sm:w-20 flex-shrink-0">
         {label}
       </div>
-      <div className="flex flex-wrap gap-1.5">
+      <div className="chip-row">
         {options.map((opt) => {
           const active = value === opt.value;
           return (
             <button
               key={opt.value}
               onClick={() => onChange(opt.value)}
-              className={`px-2.5 h-7 rounded-md text-[11px] font-mono uppercase tracking-wider transition-colors ${
-                active
-                  ? "bg-signal-500 text-ink-900 font-medium"
-                  : "bg-ink-900 border border-ink-700 text-ink-300 hover:bg-ink-700"
-              }`}
+              aria-pressed={active}
+              data-active={active}
+              className="chip"
             >
               {opt.label}
             </button>

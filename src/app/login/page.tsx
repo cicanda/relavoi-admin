@@ -51,20 +51,25 @@ export default function OperatorLoginPage() {
     }
   }
 
+  // On the ink panel the inputs are translucent; 16px text below desktop so
+  // iOS does not zoom on focus.
+  const inputCls =
+    "w-full min-h-[var(--control-h)] bg-white/[0.06] border border-white/10 text-white rounded-[14px] text-[length:var(--field-size)] placeholder:text-ink-500 hover:border-white/20 focus:outline-none focus:border-signal-500 focus:bg-white/[0.08] focus:ring-[3px] focus:ring-signal-500/25 transition-colors disabled:opacity-60";
+
   return (
-    <div className="min-h-screen w-full bg-ink-900 flex items-center justify-center px-4">
-      <div className="bg-ink-800 border border-ink-700 max-w-md w-full p-8 rounded-[10px] shadow-card">
-        <div className="flex flex-col items-center text-center mb-6">
+    <div className="min-h-screen w-full bg-canvas flex items-center justify-center px-4 py-10">
+      <div className="panel-dark relative w-full max-w-[440px] rounded-[var(--radius-panel)] shadow-[var(--shadow-pop)] p-[clamp(1.5rem,1rem+2.5vw,2.5rem)] animate-rise overflow-hidden">
+        <div className="flex flex-col items-center text-center mb-8">
           <h1 className="sr-only">Relavoi</h1>
-          <BrandLogo height={48} />
-          <p className="text-sm text-ink-400 mt-3">Operator Console</p>
+          <BrandLogo height={44} />
+          <p className="eyebrow text-ink-400 mt-4">Operator Console</p>
         </div>
 
-        <form onSubmit={onSubmit} className="space-y-4">
+        <form onSubmit={onSubmit} className="space-y-5">
           {error && (
             <div
               role="alert"
-              className="bg-rose-500/15 border border-rose-500/30 text-rose-400 text-sm rounded-md px-3 py-2"
+              className="bg-rose-500/15 border border-rose-500/30 text-rose-200 text-sm rounded-[14px] px-3.5 py-2.5"
             >
               {error}
             </div>
@@ -73,7 +78,7 @@ export default function OperatorLoginPage() {
           <div>
             <label
               htmlFor="email"
-              className="block text-[11px] font-mono uppercase tracking-wider text-ink-400 mb-1.5"
+              className="block eyebrow text-ink-400 mb-2"
             >
               Email
             </label>
@@ -86,7 +91,7 @@ export default function OperatorLoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={submitting}
-              className="w-full h-9 px-3 bg-ink-900 border border-ink-700 text-paper rounded-md text-[13px] focus:outline-none focus:border-signal-500 focus:ring-1 focus:ring-signal-500/30 transition-colors disabled:opacity-60"
+              className={`${inputCls} px-4`}
               placeholder="operator@relavoi.com"
             />
           </div>
@@ -94,7 +99,7 @@ export default function OperatorLoginPage() {
           <div>
             <label
               htmlFor="password"
-              className="block text-[11px] font-mono uppercase tracking-wider text-ink-400 mb-1.5"
+              className="block eyebrow text-ink-400 mb-2"
             >
               Password
             </label>
@@ -108,14 +113,14 @@ export default function OperatorLoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={submitting}
-                className="w-full h-9 pl-3 pr-10 bg-ink-900 border border-ink-700 text-paper rounded-md text-[13px] focus:outline-none focus:border-signal-500 focus:ring-1 focus:ring-signal-500/30 transition-colors disabled:opacity-60"
+                className={`${inputCls} pl-4 pr-12`}
                 placeholder="••••••••"
               />
               <button
                 type="button"
                 tabIndex={-1}
                 onClick={() => setShowPassword((v) => !v)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-ink-500 hover:text-paper p-1 rounded transition-colors"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-ink-400 hover:text-white rounded-full transition-colors"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -126,7 +131,7 @@ export default function OperatorLoginPage() {
           <button
             type="submit"
             disabled={submitting || !email || !password}
-            className="w-full bg-signal-500 text-ink-900 h-10 rounded-md font-medium hover:bg-signal-600 transition-colors text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+            className="btn btn-accent w-full min-h-12 text-sm"
           >
             {submitting ? "Signing in…" : "Sign in"}
           </button>

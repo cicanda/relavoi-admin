@@ -1,71 +1,89 @@
-// State / status pill styled for the dark operator-console chrome.
-// Adapts colors to dark backgrounds (subtle tinted bg, brighter text).
+// State / status pill on the light console surfaces: a soft tinted capsule
+// with a darker text tone so small mono labels stay readable.
+
+import type { Tier } from "@/lib/types";
+
+const GREEN = { bg: "bg-signal-500/15", text: "text-signal-800", dot: "bg-signal-500" };
+const AMBER = { bg: "bg-amber-500/15",  text: "text-amber-800",  dot: "bg-amber-500" };
+const SKY   = { bg: "bg-sky-500/12",    text: "text-sky-800",    dot: "bg-sky-500" };
+const ROSE  = { bg: "bg-rose-500/12",   text: "text-rose-700",   dot: "bg-rose-500" };
+const MUTED = { bg: "bg-mute",          text: "text-fg-2",       dot: "bg-ink-500" };
 
 const MAP: Record<string, { bg: string; text: string; dot: string; label?: string }> = {
   // Session states
-  ACTIVE:       { bg: "bg-signal-500/15", text: "text-signal-500",  dot: "bg-signal-500" },
-  PENDING:      { bg: "bg-amber-500/15",  text: "text-amber-400",   dot: "bg-amber-500" },
-  GRACE_PERIOD: { bg: "bg-sky-500/15",    text: "text-sky-400",     dot: "bg-sky-500", label: "GRACE" },
-  EXPIRED:      { bg: "bg-ink-700",       text: "text-ink-400",     dot: "bg-ink-500" },
-  FAILED:       { bg: "bg-rose-500/15",   text: "text-rose-400",    dot: "bg-rose-500" },
+  ACTIVE:       GREEN,
+  PENDING:      AMBER,
+  GRACE_PERIOD: { ...SKY, label: "GRACE" },
+  EXPIRED:      MUTED,
+  FAILED:       ROSE,
 
   // Call states
-  RINGING:      { bg: "bg-amber-500/15",  text: "text-amber-400",   dot: "bg-amber-500" },
-  ANSWERED:     { bg: "bg-signal-500/15", text: "text-signal-500",  dot: "bg-signal-500" },
-  COMPLETED:    { bg: "bg-ink-700",       text: "text-ink-300",     dot: "bg-ink-500" },
-  MISSED:       { bg: "bg-amber-500/15",  text: "text-amber-400",   dot: "bg-amber-500" },
+  RINGING:      AMBER,
+  ANSWERED:     GREEN,
+  COMPLETED:    MUTED,
+  MISSED:       AMBER,
 
   // Number / pool states
-  AVAILABLE:    { bg: "bg-signal-500/15", text: "text-signal-500",  dot: "bg-signal-500" },
-  IN_USE:       { bg: "bg-sky-500/15",    text: "text-sky-400",     dot: "bg-sky-500" },
-  COOLDOWN:     { bg: "bg-amber-500/15",  text: "text-amber-400",   dot: "bg-amber-500" },
-  QUARANTINED:  { bg: "bg-rose-500/15",   text: "text-rose-400",    dot: "bg-rose-500" },
+  AVAILABLE:    GREEN,
+  IN_USE:       SKY,
+  COOLDOWN:     AMBER,
+  QUARANTINED:  ROSE,
 
   // Circuit breaker
-  CLOSED:       { bg: "bg-signal-500/15", text: "text-signal-500",  dot: "bg-signal-500" },
-  OPEN:         { bg: "bg-rose-500/15",   text: "text-rose-400",    dot: "bg-rose-500" },
-  HALF_OPEN:    { bg: "bg-amber-500/15",  text: "text-amber-400",   dot: "bg-amber-500", label: "HALF-OPEN" },
+  CLOSED:       GREEN,
+  OPEN:         ROSE,
+  HALF_OPEN:    { ...AMBER, label: "HALF-OPEN" },
 
   // DLQ
-  RETRYING:     { bg: "bg-amber-500/15",  text: "text-amber-400",   dot: "bg-amber-500" },
-  RESOLVED:     { bg: "bg-signal-500/15", text: "text-signal-500",  dot: "bg-signal-500" },
-  ABANDONED:    { bg: "bg-rose-500/15",   text: "text-rose-400",    dot: "bg-rose-500" },
+  RETRYING:     AMBER,
+  RESOLVED:     GREEN,
+  ABANDONED:    ROSE,
 
   // Tenant status
-  SUSPENDED:    { bg: "bg-amber-500/15",  text: "text-amber-400",   dot: "bg-amber-500" },
-  CANCELLED:    { bg: "bg-rose-500/15",   text: "text-rose-400",    dot: "bg-rose-500" },
+  SUSPENDED:    AMBER,
+  CANCELLED:    ROSE,
 
   // Health checks
-  ok:           { bg: "bg-signal-500/15", text: "text-signal-500",  dot: "bg-signal-500", label: "OK" },
-  down:         { bg: "bg-rose-500/15",   text: "text-rose-400",    dot: "bg-rose-500", label: "DOWN" },
-  healthy:      { bg: "bg-signal-500/15", text: "text-signal-500",  dot: "bg-signal-500", label: "HEALTHY" },
-  degraded:     { bg: "bg-amber-500/15",  text: "text-amber-400",   dot: "bg-amber-500", label: "DEGRADED" },
+  ok:           { ...GREEN, label: "OK" },
+  down:         { ...ROSE, label: "DOWN" },
+  healthy:      { ...GREEN, label: "HEALTHY" },
+  degraded:     { ...AMBER, label: "DEGRADED" },
 };
 
 export function StatePill({ state, size = "md" }: { state: string; size?: "sm" | "md" }) {
-  const cfg = MAP[state] ?? { bg: "bg-ink-700", text: "text-ink-300", dot: "bg-ink-500" };
+  const cfg = MAP[state] ?? MUTED;
   const label = cfg.label ?? state;
-  const padding = size === "sm" ? "px-1.5 py-0.5 text-[10px]" : "px-2 py-1 text-[11px]";
   return (
-    <span className={`inline-flex items-center gap-1.5 ${cfg.bg} ${cfg.text} ${padding} rounded-md font-mono uppercase tracking-wider font-medium`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot} ${state === "ACTIVE" ? "animate-pulse-dot" : ""}`} />
+    <span className={`badge ${size === "sm" ? "badge-sm" : ""} ${cfg.bg} ${cfg.text}`}>
+      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${cfg.dot} ${state === "ACTIVE" ? "animate-pulse-dot" : ""}`} />
       {label}
     </span>
   );
 }
 
-const ROLE_MAP: Record<string, { bg: string; text: string }> = {
-  ROOT:    { bg: "bg-rose-500/15",   text: "text-rose-400" },
-  SRE:     { bg: "bg-amber-500/15",  text: "text-amber-400" },
-  SUPPORT: { bg: "bg-sky-500/15",    text: "text-sky-400" },
-  VIEWER:  { bg: "bg-ink-700",       text: "text-ink-300" },
+const ROLE_MAP: Record<string, { bg: string; text: string; dark: string }> = {
+  ROOT:    { bg: "bg-rose-500/12",  text: "text-rose-700",  dark: "bg-rose-500/20 text-rose-300" },
+  SRE:     { bg: "bg-amber-500/15", text: "text-amber-800", dark: "bg-amber-500/20 text-amber-300" },
+  SUPPORT: { bg: "bg-sky-500/12",   text: "text-sky-800",   dark: "bg-sky-500/20 text-sky-300" },
+  VIEWER:  { bg: "bg-mute",         text: "text-fg-2",      dark: "bg-white/10 text-ink-300" },
 };
 
-export function RolePill({ role }: { role: string }) {
+/** `onDark` for the ink sidebar, where the light-surface tones would vanish. */
+export function RolePill({ role, onDark = false }: { role: string; onDark?: boolean }) {
   const cfg = ROLE_MAP[role] ?? ROLE_MAP.VIEWER;
   return (
-    <span className={`inline-flex items-center ${cfg.bg} ${cfg.text} px-2 py-1 rounded-md font-mono text-[11px] uppercase tracking-wider font-medium`}>
+    <span className={`badge badge-sm ${onDark ? cfg.dark : `${cfg.bg} ${cfg.text}`}`}>
       {role}
     </span>
   );
+}
+
+export function TierPill({ tier }: { tier: Tier }) {
+  const cfg =
+    tier === "ENTERPRISE"
+      ? "bg-signal-500/15 text-signal-800"
+      : tier === "GROWTH"
+        ? "bg-sky-500/12 text-sky-800"
+        : "bg-mute text-fg-2";
+  return <span className={`badge badge-sm flex-shrink-0 ${cfg}`}>{tier}</span>;
 }

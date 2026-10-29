@@ -57,27 +57,28 @@ export default function VerificationPage() {
         description="Businesses awaiting manual review before they can go live."
       />
 
-      <div className="mb-4 flex flex-wrap gap-2">
+      {/* A tab bar: on a narrow screen it scrolls inside itself, never the page. */}
+      <div className="mb-[var(--gap)] -mx-[var(--gutter)] px-[var(--gutter)] py-1.5 flex gap-2 overflow-x-auto [scrollbar-width:none] sm:mx-0 sm:px-0 sm:flex-wrap sm:overflow-visible">
         {STATUSES.map((s) => (
           <button
             key={s.value}
             type="button"
             onClick={() => setStatus(s.value)}
-            className={`px-3 h-9 rounded-md text-[13px] border transition-colors ${
-              status === s.value
-                ? "bg-paper text-ink-900 border-paper font-medium"
-                : "bg-ink-800 text-ink-300 border-ink-700 hover:bg-ink-700"
-            }`}
+            aria-pressed={status === s.value}
+            data-active={status === s.value}
+            className="chip chip-plain h-10 px-4 flex-shrink-0"
           >
             {s.label}
           </button>
         ))}
       </div>
 
-      <div className="bg-ink-800 border border-ink-700 rounded-[10px] shadow-card">
-        <div className="px-5 py-4 border-b border-ink-700 flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-ink-400" />
-          <h2 className="text-sm font-semibold text-paper">
+      <section className="card overflow-hidden">
+        <div className="card-head card-head-ruled justify-start">
+          <span className="icon-tile w-9 h-9">
+            <ShieldCheck className="w-4 h-4" />
+          </span>
+          <h2 className="card-title">
             {STATUSES.find((s) => s.value === status)?.label}
             {!q.isLoading && ` (${rows.length})`}
           </h2>
@@ -85,18 +86,13 @@ export default function VerificationPage() {
 
         {/* Horizontal scroll only inside the table, so the page itself never
             scrolls sideways on a narrow screen. */}
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px]">
+        <div className="table-scroll">
+          <table className="data-table min-w-[720px]">
             <thead>
               <tr>
                 {["Workspace", "Registered name", "Registration", "Docs", "Submitted", "Waiting"].map(
                   (h) => (
-                    <th
-                      key={h}
-                      className="bg-ink-900 px-4 py-2 text-[11px] font-mono uppercase tracking-wider text-ink-500 text-left whitespace-nowrap"
-                    >
-                      {h}
-                    </th>
+                    <th key={h}>{h}</th>
                   ),
                 )}
               </tr>
@@ -106,7 +102,7 @@ export default function VerificationPage() {
                 Array.from({ length: 3 }).map((_, i) => (
                   <tr key={i}>
                     {Array.from({ length: 6 }).map((_, j) => (
-                      <td key={j} className="px-4 py-3 border-t border-ink-700">
+                      <td key={j}>
                         <Skeleton className="h-3 w-full" />
                       </td>
                     ))}
@@ -117,7 +113,7 @@ export default function VerificationPage() {
                 <tr>
                   <td
                     colSpan={6}
-                    className="px-4 py-10 border-t border-ink-700 text-center text-sm text-ink-500"
+                    className="py-10 text-center text-sm text-fg-3"
                   >
                     {status === "PENDING"
                       ? "Nothing waiting for review."
@@ -130,33 +126,33 @@ export default function VerificationPage() {
                 <tr
                   key={r.tenantId}
                   onClick={() => router.push(`/console/tenants/${r.tenantId}`)}
-                  className="cursor-pointer hover:bg-ink-700/40 transition-colors"
+                  className="row-link"
                 >
-                  <td className="px-4 py-3 border-t border-ink-700 text-[13px] text-paper">
+                  <td className="font-medium text-[14px] tracking-[-0.01em]">
                     {r.workspaceName}
-                    <div className="text-[11px] text-ink-500">
+                    <div className="text-[12px] font-normal text-fg-3 mt-0.5">
                       {r.tier} · {r.mode}
                     </div>
                   </td>
-                  <td className="px-4 py-3 border-t border-ink-700 text-[13px] text-ink-200">
+                  <td>
                     {r.legalName ?? "—"}
                   </td>
-                  <td className="px-4 py-3 border-t border-ink-700 text-[13px] text-ink-200 whitespace-nowrap">
+                  <td className="whitespace-nowrap">
                     {r.registrationNumber ?? "—"}
                     {r.registrationType && (
-                      <span className="text-[11px] text-ink-500">
+                      <span className="text-[12px] text-fg-3">
                         {" "}
                         {REGISTRATION_LABELS[r.registrationType]}
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 border-t border-ink-700 text-[13px] text-ink-200 tabular-nums">
+                  <td className="tabular-nums">
                     {r.documentCount}
                   </td>
-                  <td className="px-4 py-3 border-t border-ink-700 text-[13px] text-ink-300 whitespace-nowrap">
+                  <td className="text-fg-2 whitespace-nowrap">
                     {r.submittedAt ? new Date(r.submittedAt).toLocaleDateString() : "—"}
                   </td>
-                  <td className="px-4 py-3 border-t border-ink-700 text-[13px] text-ink-300 whitespace-nowrap">
+                  <td className="text-fg-2 whitespace-nowrap">
                     {waitingFor(r.submittedAt)}
                   </td>
                 </tr>
@@ -164,7 +160,7 @@ export default function VerificationPage() {
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
     </>
   );
 }

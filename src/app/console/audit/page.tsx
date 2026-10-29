@@ -15,9 +15,9 @@ const ACTOR_STYLES: Record<
   AuditEntry["actorType"],
   { bg: string; text: string }
 > = {
-  operator: { bg: "bg-sky-500/15", text: "text-sky-400" },
-  tenant: { bg: "bg-signal-500/15", text: "text-signal-500" },
-  system: { bg: "bg-ink-700", text: "text-ink-300" },
+  operator: { bg: "bg-sky-500/12", text: "text-sky-800" },
+  tenant: { bg: "bg-signal-500/15", text: "text-signal-800" },
+  system: { bg: "bg-mute", text: "text-fg-2" },
 };
 
 export default function AuditPage() {
@@ -115,7 +115,7 @@ export default function AuditPage() {
       />
 
       {/* Filter bar */}
-      <div className="bg-ink-800 border border-ink-700 rounded-[10px] shadow-card p-4 mb-4 space-y-3">
+      <div className="card card-pad mb-[var(--gap)] space-y-5">
         <div className="flex flex-wrap items-center gap-3">
           <FilterGroup label="Actor">
             {(["ALL", "operator", "tenant", "system"] as const).map((a) => (
@@ -129,14 +129,14 @@ export default function AuditPage() {
             ))}
           </FilterGroup>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-4 pt-5 border-t border-line">
           <LabeledInput label="Resource type">
             <input
               type="text"
               value={resourceType}
               onChange={(e) => setResourceType(e.target.value)}
               placeholder="e.g. tenant, session"
-              className="h-9 px-3 bg-ink-900 border border-ink-700 text-paper rounded-md text-[13px] focus:outline-none focus:border-signal-500 focus:ring-1 focus:ring-signal-500/30 w-full"
+              className="field w-full"
             />
           </LabeledInput>
           <LabeledInput label="Action contains">
@@ -145,7 +145,7 @@ export default function AuditPage() {
               value={actionSearch}
               onChange={(e) => setActionSearch(e.target.value)}
               placeholder="e.g. login, update"
-              className="h-9 px-3 bg-ink-900 border border-ink-700 text-paper rounded-md text-[13px] focus:outline-none focus:border-signal-500 focus:ring-1 focus:ring-signal-500/30 w-full"
+              className="field w-full"
             />
           </LabeledInput>
           <LabeledInput label="From">
@@ -153,7 +153,7 @@ export default function AuditPage() {
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="h-9 px-3 bg-ink-900 border border-ink-700 text-paper rounded-md text-[13px] focus:outline-none focus:border-signal-500 focus:ring-1 focus:ring-signal-500/30 w-full"
+              className="field w-full"
             />
           </LabeledInput>
           <LabeledInput label="To">
@@ -161,16 +161,16 @@ export default function AuditPage() {
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="h-9 px-3 bg-ink-900 border border-ink-700 text-paper rounded-md text-[13px] focus:outline-none focus:border-signal-500 focus:ring-1 focus:ring-signal-500/30 w-full"
+              className="field w-full"
             />
           </LabeledInput>
         </div>
       </div>
 
       {/* Table */}
-      <div className="bg-ink-800 border border-ink-700 rounded-[10px] shadow-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
+      <div className="card overflow-hidden">
+        <div className="table-scroll">
+          <table className="data-table">
             <thead>
               <tr>
                 <Th>Time</Th>
@@ -191,7 +191,7 @@ export default function AuditPage() {
                 <tr>
                   <td
                     colSpan={5}
-                    className="px-4 py-8 border-t border-ink-700 text-center text-sm text-ink-500"
+                    className="py-10 text-center text-sm text-fg-3"
                   >
                     No audit entries match the filters.
                   </td>
@@ -202,32 +202,32 @@ export default function AuditPage() {
                   const actor = ACTOR_STYLES[e.actorType];
                   return (
                     <Fragment key={e.id}>
-                      <tr className="hover:bg-ink-900/60 transition-colors">
-                        <Td className="text-ink-400">
+                      <tr>
+                        <Td className="text-fg-2 whitespace-nowrap">
                           {fmtAbsolute(e.createdAt)}
                         </Td>
-                        <td className="px-4 py-3 border-t border-ink-700 text-[13px] text-ink-200">
+                        <td>
                           <div className="flex flex-col gap-1">
                             <span
-                              className={`inline-flex items-center self-start ${actor.bg} ${actor.text} px-2 py-0.5 rounded-md font-mono text-[10px] uppercase tracking-wider font-medium`}
+                              className={`badge badge-sm self-start ${actor.bg} ${actor.text}`}
                             >
                               {e.actorType}
                             </span>
-                            <span className="font-mono text-[11px] text-ink-500">
+                            <span className="font-mono text-[11px] text-fg-3">
                               {truncId(e.actorId)}
                             </span>
                           </div>
                         </td>
-                        <Td className="font-mono lowercase">{e.action}</Td>
-                        <Td className="font-mono text-ink-300">
+                        <Td className="font-mono lowercase whitespace-nowrap">{e.action}</Td>
+                        <Td className="font-mono text-fg-2 whitespace-nowrap">
                           {e.resourceType}
                           {e.resourceId ? `:${truncId(e.resourceId)}` : ""}
                         </Td>
-                        <td className="px-4 py-3 border-t border-ink-700">
+                        <td>
                           <button
                             type="button"
                             onClick={() => toggleExpanded(e.id)}
-                            className="bg-ink-800 border border-ink-700 text-ink-300 px-2 h-7 rounded-md hover:bg-ink-700 hover:text-paper text-[11px] transition-colors flex items-center gap-1"
+                            className="btn btn-secondary btn-sm"
                           >
                             {isOpen ? (
                               <ChevronDown className="w-3 h-3" />
@@ -242,9 +242,9 @@ export default function AuditPage() {
                         <tr>
                           <td
                             colSpan={5}
-                            className="px-4 py-3 border-t border-ink-700 bg-ink-900/40"
+                            className="bg-sunken/60"
                           >
-                            <div className="bg-ink-900 border border-ink-700 rounded-md p-3 font-mono text-[11px] text-ink-300 overflow-x-auto whitespace-pre">
+                            <div className="code-block text-[11px] whitespace-pre">
                               {JSON.stringify(
                                 {
                                   id: e.id,
@@ -273,12 +273,12 @@ export default function AuditPage() {
         </div>
 
         {nextCursor && (
-          <div className="border-t border-ink-700 p-3 flex justify-center">
+          <div className="border-t border-line px-4 py-3 flex justify-center">
             <button
               type="button"
               onClick={() => setCursor(nextCursor)}
               disabled={auditQ.isFetching}
-              className="bg-ink-800 border border-ink-700 text-paper px-3 h-9 rounded-md hover:bg-ink-700 text-sm transition-colors disabled:opacity-50"
+              className="btn btn-secondary"
             >
               {auditQ.isFetching ? "Loading…" : "Load more"}
             </button>
@@ -290,11 +290,7 @@ export default function AuditPage() {
 }
 
 function Th({ children }: { children: React.ReactNode }) {
-  return (
-    <th className="bg-ink-900 px-4 py-2 text-[11px] font-mono uppercase tracking-wider text-ink-500 text-left">
-      {children}
-    </th>
-  );
+  return <th>{children}</th>;
 }
 
 function Td({
@@ -305,9 +301,7 @@ function Td({
   className?: string;
 }) {
   return (
-    <td
-      className={`px-4 py-3 border-t border-ink-700 text-[13px] text-ink-200 ${className}`}
-    >
+    <td className={className}>
       {children}
     </td>
   );
@@ -321,11 +315,11 @@ function FilterGroup({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-[11px] font-mono uppercase tracking-wider text-ink-500">
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 min-w-0">
+      <span className="eyebrow text-fg-3 flex-shrink-0">
         {label}
       </span>
-      <div className="flex items-center gap-1">{children}</div>
+      <div className="chip-row">{children}</div>
     </div>
   );
 }
@@ -343,11 +337,9 @@ function FilterPill({
     <button
       type="button"
       onClick={onClick}
-      className={`px-2.5 h-7 rounded-md text-[11px] font-mono uppercase tracking-wider transition-colors ${
-        active
-          ? "bg-signal-500/15 text-signal-500 border border-signal-500/30"
-          : "bg-ink-900 text-ink-400 border border-ink-700 hover:text-paper hover:border-ink-500"
-      }`}
+      aria-pressed={active}
+      data-active={active}
+      className="chip"
     >
       {children}
     </button>
@@ -362,8 +354,8 @@ function LabeledInput({
   children: React.ReactNode;
 }) {
   return (
-    <label className="flex flex-col gap-1">
-      <span className="text-[11px] font-mono uppercase tracking-wider text-ink-500">
+    <label className="flex flex-col min-w-0">
+      <span className="field-label eyebrow">
         {label}
       </span>
       {children}

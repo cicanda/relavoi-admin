@@ -40,7 +40,8 @@ export default function FleetPage() {
     <div>
       <PageHeader title="Fleet" description="Service replicas, datastores, and runtime" />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="bento">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-1.5">
         <FleetCard title="API service" icon={Server} loading={isLoading}>
           <Row label="Replicas" value="2" />
           <RowPill label="Status" state={serviceState} />
@@ -78,15 +79,16 @@ export default function FleetPage() {
           <Row label="Platform" value={platform} />
         </FleetCard>
 
-        <div className="opacity-60">
+        <div className="opacity-60 [&>.card]:h-full">
           <FleetCard title="Kubernetes" icon={Layers}>
             <Row label="Replicas across pods" value="—" />
-            <div className="text-xs text-ink-500 mt-2">
+            <div className="text-xs text-fg-3 pt-3">
               Coming soon — pod-level introspection will appear here once the operator API exposes
               it.
             </div>
           </FleetCard>
         </div>
+      </div>
       </div>
     </div>
   );
@@ -104,19 +106,19 @@ function FleetCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-ink-800 border border-ink-700 rounded-[10px] shadow-card p-4">
-      <div className="flex items-start justify-between mb-3">
-        <div className="text-paper font-semibold text-base">{title}</div>
-        <div className="w-9 h-9 rounded-md bg-ink-900 flex items-center justify-center flex-shrink-0">
-          <Icon className="w-4 h-4 text-ink-400" />
+    <div className="card card-pad card-lift min-w-0">
+      <div className="flex items-start justify-between gap-3 mb-4">
+        <div className="card-title">{title}</div>
+        <div className="icon-tile w-9 h-9">
+          <Icon className="w-4 h-4" />
         </div>
       </div>
-      <div className="space-y-2">
+      <div className="divide-y divide-line">
         {loading ? (
-          <div className="space-y-2">
-            <div className="h-3 rounded animate-shimmer" />
-            <div className="h-3 rounded animate-shimmer w-3/4" />
-            <div className="h-3 rounded animate-shimmer w-1/2" />
+          <div className="space-y-3 py-2">
+            <div className="h-3 rounded-full animate-shimmer" />
+            <div className="h-3 rounded-full animate-shimmer w-3/4" />
+            <div className="h-3 rounded-full animate-shimmer w-1/2" />
           </div>
         ) : (
           children
@@ -128,11 +130,11 @@ function FleetCard({
 
 function Row({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="flex items-center justify-between text-[13px]">
-      <span className="text-ink-400">{label}</span>
-      <span className="text-paper font-mono tabular-nums">
+    <div className="flex items-center justify-between gap-3 py-2.5 text-[13px] min-w-0">
+      <span className="text-fg-2">{label}</span>
+      <span className="text-fg font-mono tabular-nums text-right break-all">
         {value}
-        {hint && <span className="text-ink-500 font-sans ml-1.5 text-xs">({hint})</span>}
+        {hint && <span className="text-fg-3 font-sans ml-1.5 text-xs">({hint})</span>}
       </span>
     </div>
   );
@@ -140,8 +142,8 @@ function Row({ label, value, hint }: { label: string; value: string; hint?: stri
 
 function RowPill({ label, state }: { label: string; state: string }) {
   return (
-    <div className="flex items-center justify-between text-[13px]">
-      <span className="text-ink-400">{label}</span>
+    <div className="flex items-center justify-between gap-3 py-2.5 text-[13px]">
+      <span className="text-fg-2">{label}</span>
       <StatePill state={state} />
     </div>
   );

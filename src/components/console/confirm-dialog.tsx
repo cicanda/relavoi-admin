@@ -53,16 +53,20 @@ export function ConfirmDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4"
+      className="modal-backdrop"
       role="dialog"
       aria-modal="true"
       aria-labelledby="confirm-title"
     >
-      <div className="bg-ink-800 border border-ink-700 w-full sm:max-w-md rounded-t-[12px] sm:rounded-[10px] shadow-card max-h-[90vh] overflow-y-auto">
-        <div className="flex items-start justify-between gap-3 p-5 pb-3">
+      <div className="modal">
+        <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3 min-w-0">
-            {danger && <AlertTriangle className="w-4 h-4 text-red-400 mt-0.5 shrink-0" />}
-            <h2 id="confirm-title" className="text-base font-semibold text-paper min-w-0">
+            {danger && (
+              <span className="w-9 h-9 rounded-full bg-red-500/10 text-red-600 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-4 h-4" />
+              </span>
+            )}
+            <h2 id="confirm-title" className={`modal-title min-w-0 ${danger ? "pt-1" : ""}`}>
               {title}
             </h2>
           </div>
@@ -71,22 +75,22 @@ export function ConfirmDialog({
             onClick={onCancel}
             disabled={busy}
             aria-label="Close"
-            className="shrink-0 p-1 rounded text-ink-400 hover:text-paper transition-colors disabled:opacity-50"
+            className="icon-btn-xs -mr-1"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="px-5 pb-5">
-          {description && <div className="text-[13px] text-ink-300">{description}</div>}
-          {children && <div className="mt-3">{children}</div>}
+        <div className="mt-3">
+          {description && <div className="text-sm text-fg-2 leading-relaxed">{description}</div>}
+          {children && <div className="mt-4">{children}</div>}
 
-          <div className="mt-5 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+          <div className="modal-actions mt-6">
             <button
               type="button"
               onClick={onCancel}
               disabled={busy}
-              className="bg-ink-900 border border-ink-700 text-ink-200 px-4 h-10 rounded-md text-sm hover:bg-ink-700 transition-colors disabled:opacity-50"
+              className="btn btn-secondary"
             >
               {cancelLabel}
             </button>
@@ -95,11 +99,7 @@ export function ConfirmDialog({
               type="button"
               onClick={onConfirm}
               disabled={disabled || busy}
-              className={`px-4 h-10 rounded-md text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-                danger
-                  ? "bg-red-600 text-paper hover:bg-red-500"
-                  : "bg-paper text-ink-900 hover:bg-ink-200"
-              }`}
+              className={`btn ${danger ? "btn-danger" : "btn-primary"}`}
             >
               {busy ? "Working…" : confirmLabel}
             </button>

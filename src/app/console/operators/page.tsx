@@ -88,12 +88,12 @@ export default function OperatorsPage() {
           title="Operators"
           description="Console users and their roles"
         />
-        <div className="bg-ink-800 border border-ink-700 rounded-[10px] shadow-card p-10 flex flex-col items-center justify-center text-center">
-          <div className="w-12 h-12 rounded-full bg-rose-500/15 flex items-center justify-center mb-3">
-            <Lock className="w-6 h-6 text-rose-400" />
+        <div className="card card-pad py-14 flex flex-col items-center justify-center text-center">
+          <div className="w-14 h-14 rounded-full bg-rose-500/12 flex items-center justify-center mb-4">
+            <Lock className="w-6 h-6 text-rose-700" />
           </div>
-          <h2 className="text-lg font-semibold text-paper">Access denied</h2>
-          <p className="text-sm text-ink-400 mt-1 max-w-sm">
+          <h2 className="text-[22px] font-normal tracking-[-0.03em] text-fg">Access denied</h2>
+          <p className="text-sm text-fg-2 mt-1.5 max-w-sm">
             You need ROOT role to manage operators.
           </p>
         </div>
@@ -135,7 +135,7 @@ export default function OperatorsPage() {
           <button
             type="button"
             onClick={() => setShowAdd(true)}
-            className="bg-signal-500 text-ink-900 px-4 h-10 rounded-md font-medium hover:bg-signal-600 text-sm transition-colors flex items-center gap-2"
+            className="btn btn-accent"
           >
             <UserPlus className="w-3.5 h-3.5" />
             Add Operator
@@ -143,9 +143,9 @@ export default function OperatorsPage() {
         }
       />
 
-      <div className="bg-ink-800 border border-ink-700 rounded-[10px] shadow-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
+      <div className="card overflow-hidden">
+        <div className="table-scroll">
+          <table className="data-table">
             <thead>
               <tr>
                 <Th>Name</Th>
@@ -167,7 +167,7 @@ export default function OperatorsPage() {
                 <tr>
                   <td
                     colSpan={6}
-                    className="px-4 py-8 border-t border-ink-700 text-center text-sm text-ink-500"
+                    className="py-10 text-center text-sm text-fg-3"
                   >
                     No operators yet.
                   </td>
@@ -176,39 +176,36 @@ export default function OperatorsPage() {
                 operators.map((op) => {
                   const isSelf = op.id === currentId;
                   return (
-                    <tr
-                      key={op.id}
-                      className="hover:bg-ink-900/60 transition-colors"
-                    >
-                      <Td>
-                        <div className="flex items-center gap-2">
+                    <tr key={op.id}>
+                      <Td className="font-medium text-[14px] tracking-[-0.01em]">
+                        <div className="flex items-center gap-2 whitespace-nowrap">
                           {op.name || "—"}
                           {isSelf && (
-                            <span className="text-[10px] font-mono uppercase tracking-wider text-ink-500 border border-ink-700 rounded px-1.5 py-0.5">
+                            <span className="badge badge-sm font-normal bg-ink-900 text-white">
                               you
                             </span>
                           )}
                         </div>
                       </Td>
-                      <Td className="font-mono text-ink-300">{op.email}</Td>
-                      <td className="px-4 py-3 border-t border-ink-700">
+                      <Td className="font-mono text-fg-2 whitespace-nowrap">{op.email}</Td>
+                      <td>
                         <RolePill role={op.role} />
                       </td>
-                      <Td className="text-ink-400">
+                      <Td className="text-fg-2 whitespace-nowrap">
                         {fmtRelative(op.lastLoginAt)}
                       </Td>
-                      <td className="px-4 py-3 border-t border-ink-700">
+                      <td>
                         <StatePill
                           state={op.isActive === false ? "EXPIRED" : "ACTIVE"}
                           size="sm"
                         />
                       </td>
-                      <td className="px-4 py-3 border-t border-ink-700">
+                      <td>
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
                             onClick={() => setEditTarget(op)}
-                            className="bg-ink-800 border border-ink-700 text-paper px-2 h-7 rounded-md hover:bg-ink-700 text-[11px] transition-colors flex items-center gap-1"
+                            className="btn btn-secondary btn-sm"
                           >
                             <Edit className="w-3 h-3" />
                             Edit
@@ -218,7 +215,7 @@ export default function OperatorsPage() {
                             onClick={() => askDeactivate(op)}
                             disabled={isSelf || deactivateM.isPending}
                             title={isSelf ? "Cannot deactivate yourself" : undefined}
-                            className="bg-ink-800 border border-ink-700 text-paper px-2 h-7 rounded-md hover:bg-ink-700 text-[11px] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="btn btn-secondary btn-sm"
                           >
                             Deactivate
                           </button>
@@ -227,7 +224,7 @@ export default function OperatorsPage() {
                             onClick={() => askDelete(op)}
                             disabled={isSelf || deleteM.isPending}
                             title={isSelf ? "Cannot delete yourself" : undefined}
-                            className="bg-rose-500/15 text-rose-400 border border-rose-500/30 px-2 h-7 rounded-md hover:bg-rose-500/25 text-[11px] transition-colors flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="btn btn-danger-soft btn-sm"
                           >
                             <Trash2 className="w-3 h-3" />
                             Delete
@@ -268,11 +265,7 @@ export default function OperatorsPage() {
 }
 
 function Th({ children }: { children: React.ReactNode }) {
-  return (
-    <th className="bg-ink-900 px-4 py-2 text-[11px] font-mono uppercase tracking-wider text-ink-500 text-left">
-      {children}
-    </th>
-  );
+  return <th>{children}</th>;
 }
 
 function Td({
@@ -283,9 +276,7 @@ function Td({
   className?: string;
 }) {
   return (
-    <td
-      className={`px-4 py-3 border-t border-ink-700 text-[13px] text-ink-200 ${className}`}
-    >
+    <td className={className}>
       {children}
     </td>
   );
@@ -343,14 +334,14 @@ function AddOperatorModal({
 
   return (
     <ModalShell title="Add Operator" onClose={onClose}>
-      <form onSubmit={submit} className="space-y-4">
+      <form onSubmit={submit} className="space-y-5">
         <Field label="Name">
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             autoFocus
-            className="h-9 px-3 bg-ink-900 border border-ink-700 text-paper rounded-md text-[13px] focus:outline-none focus:border-signal-500 focus:ring-1 focus:ring-signal-500/30 w-full"
+            className="field w-full"
           />
         </Field>
         <Field label="Email">
@@ -358,14 +349,14 @@ function AddOperatorModal({
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="h-9 px-3 bg-ink-900 border border-ink-700 text-paper rounded-md text-[13px] font-mono focus:outline-none focus:border-signal-500 focus:ring-1 focus:ring-signal-500/30 w-full"
+            className="field font-mono w-full"
           />
         </Field>
         <Field label="Role">
           <select
             value={role}
             onChange={(e) => setRole(e.target.value as OperatorRole)}
-            className="h-9 px-3 bg-ink-900 border border-ink-700 text-paper rounded-md text-[13px] focus:outline-none focus:border-signal-500 focus:ring-1 focus:ring-signal-500/30 w-full"
+            className="field w-full"
           >
             {ROLES.map((r) => (
               <option key={r} value={r}>
@@ -388,23 +379,23 @@ function AddOperatorModal({
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="h-9 px-3 bg-ink-900 border border-ink-700 text-paper rounded-md text-[13px] font-mono focus:outline-none focus:border-signal-500 focus:ring-1 focus:ring-signal-500/30 w-full"
+            className="field font-mono w-full"
           />
         </Field>
 
-        <div className="flex items-center justify-end gap-2 pt-2">
+        <div className="modal-actions pt-2">
           <button
             type="button"
             onClick={onClose}
             disabled={busy}
-            className="bg-ink-800 border border-ink-700 text-paper px-3 h-9 rounded-md hover:bg-ink-700 text-sm transition-colors disabled:opacity-50"
+            className="btn btn-secondary"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={busy}
-            className="bg-signal-500 text-ink-900 px-4 h-10 rounded-md font-medium hover:bg-signal-600 text-sm transition-colors disabled:opacity-50"
+            className="btn btn-accent"
           >
             {busy ? "Creating…" : "Create"}
           </button>
@@ -453,13 +444,13 @@ function EditOperatorModal({
 
   return (
     <ModalShell title="Edit Operator" onClose={onClose}>
-      <form onSubmit={submit} className="space-y-4">
+      <form onSubmit={submit} className="space-y-5">
         <Field label="Name">
           <input
             type="text"
             defaultValue={operator.name}
             disabled
-            className="h-9 px-3 bg-ink-900 border border-ink-700 text-ink-400 rounded-md text-[13px] w-full"
+            className="field w-full"
           />
         </Field>
         <Field label="Email">
@@ -467,14 +458,14 @@ function EditOperatorModal({
             type="email"
             defaultValue={operator.email}
             disabled
-            className="h-9 px-3 bg-ink-900 border border-ink-700 text-ink-400 rounded-md text-[13px] font-mono w-full"
+            className="field font-mono w-full"
           />
         </Field>
         <Field label="Role">
           <select
             value={role}
             onChange={(e) => setRole(e.target.value as OperatorRole)}
-            className="h-9 px-3 bg-ink-900 border border-ink-700 text-paper rounded-md text-[13px] focus:outline-none focus:border-signal-500 focus:ring-1 focus:ring-signal-500/30 w-full"
+            className="field w-full"
           >
             {ROLES.map((r) => (
               <option key={r} value={r}>
@@ -484,19 +475,19 @@ function EditOperatorModal({
           </select>
         </Field>
 
-        <div className="flex items-center justify-end gap-2 pt-2">
+        <div className="modal-actions pt-2">
           <button
             type="button"
             onClick={onClose}
             disabled={busy}
-            className="bg-ink-800 border border-ink-700 text-paper px-3 h-9 rounded-md hover:bg-ink-700 text-sm transition-colors disabled:opacity-50"
+            className="btn btn-secondary"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={busy}
-            className="bg-signal-500 text-ink-900 px-4 h-10 rounded-md font-medium hover:bg-signal-600 text-sm transition-colors disabled:opacity-50"
+            className="btn btn-accent"
           >
             {busy ? "Saving…" : "Save"}
           </button>
@@ -516,14 +507,14 @@ function ModalShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="fixed inset-0 z-40 bg-ink-900/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-ink-800 border border-ink-700 rounded-[10px] shadow-card p-6 max-w-md w-full">
-        <div className="flex items-start justify-between mb-4">
-          <h3 className="text-base font-semibold text-paper">{title}</h3>
+    <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label={title}>
+      <div className="modal">
+        <div className="flex items-start justify-between gap-3 mb-5">
+          <h3 className="modal-title">{title}</h3>
           <button
             type="button"
             onClick={onClose}
-            className="text-ink-500 hover:text-paper transition-colors"
+            className="icon-btn-xs -mr-1"
             aria-label="Close"
           >
             <X className="w-4 h-4" />
@@ -545,12 +536,12 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <label className="flex flex-col gap-1">
-      <span className="text-[11px] font-mono uppercase tracking-wider text-ink-500">
+    <label className="flex flex-col min-w-0">
+      <span className="field-label eyebrow">
         {label}
       </span>
       {children}
-      {hint && <span className="text-[11px] text-ink-500">{hint}</span>}
+      {hint && <span className="text-[12px] text-fg-3 mt-1.5">{hint}</span>}
     </label>
   );
 }
@@ -576,13 +567,13 @@ function ConfirmModal({
 
   return (
     <ModalShell title={action.title} onClose={onClose}>
-      <p className="text-sm text-ink-300 mb-5">{action.description}</p>
-      <div className="flex items-center justify-end gap-2">
+      <p className="text-sm text-fg-2 mb-6 leading-relaxed">{action.description}</p>
+      <div className="modal-actions">
         <button
           type="button"
           onClick={onClose}
           disabled={busy}
-          className="bg-ink-800 border border-ink-700 text-paper px-3 h-9 rounded-md hover:bg-ink-700 text-sm transition-colors disabled:opacity-50"
+          className="btn btn-secondary"
         >
           Cancel
         </button>
@@ -590,11 +581,7 @@ function ConfirmModal({
           type="button"
           onClick={go}
           disabled={busy}
-          className={
-            action.danger
-              ? "bg-rose-500/15 text-rose-400 border border-rose-500/30 px-4 h-10 rounded-md hover:bg-rose-500/25 text-sm transition-colors disabled:opacity-50"
-              : "bg-signal-500 text-ink-900 px-4 h-10 rounded-md font-medium hover:bg-signal-600 text-sm transition-colors disabled:opacity-50"
-          }
+          className={action.danger ? "btn btn-danger-soft" : "btn btn-accent"}
         >
           {busy ? "Working…" : action.confirmLabel}
         </button>

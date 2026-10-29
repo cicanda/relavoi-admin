@@ -23,26 +23,28 @@ export function StatCard({
     : accent === "sky"    ? "bg-sky-500"
     : null;
 
+  // After the reference's stat tiles: label up top, a large light figure
+  // anchored to the bottom, and room to breathe in between.
   return (
-    <div className="bg-ink-800 border border-ink-700 rounded-[10px] shadow-card p-4">
-      <div className="flex items-start justify-between">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            {dotColor && <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />}
-            <div className="text-[11px] font-mono uppercase tracking-wider text-ink-400">{label}</div>
-          </div>
-          {loading ? (
-            <div className="mt-2 h-8 w-24 rounded animate-shimmer" />
-          ) : (
-            <div className="mt-1.5 text-2xl font-semibold text-paper tabular-nums">{value}</div>
-          )}
-          {hint && !loading && <div className="text-xs text-ink-500 mt-0.5">{hint}</div>}
+    <div className="card card-lift card-pad min-w-0 h-full flex flex-col gap-6 sm:min-h-[148px]">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2 min-w-0">
+          {dotColor && <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotColor}`} />}
+          <div className="eyebrow text-fg-2">{label}</div>
         </div>
         {Icon && (
-          <div className="w-9 h-9 rounded-md bg-ink-900 flex items-center justify-center flex-shrink-0">
-            <Icon className="w-4 h-4 text-ink-400" />
+          <div className="icon-tile w-9 h-9">
+            <Icon className="w-4 h-4" />
           </div>
         )}
+      </div>
+      <div className="mt-auto">
+        {loading ? (
+          <div className="h-9 w-24 rounded-md animate-shimmer" />
+        ) : (
+          <div className="text-[length:var(--text-stat)] font-light text-fg tabular-nums tracking-[-0.04em] leading-none break-words">{value}</div>
+        )}
+        {hint && !loading && <div className="text-xs text-fg-3 mt-2">{hint}</div>}
       </div>
     </div>
   );

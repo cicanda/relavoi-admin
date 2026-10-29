@@ -126,9 +126,9 @@ export default function SessionsPage() {
   }, [allSessions, proxySearch, regionFilter, tenantMap]);
 
   function directionIcon(dir?: Session["directionMode"]) {
-    if (dir === "A_TO_B_ONLY") return <ArrowRight className="w-3.5 h-3.5 text-ink-400" />;
-    if (dir === "B_TO_A_ONLY") return <ArrowLeft className="w-3.5 h-3.5 text-ink-400" />;
-    return <ArrowLeftRight className="w-3.5 h-3.5 text-ink-400" />;
+    if (dir === "A_TO_B_ONLY") return <ArrowRight className="w-3.5 h-3.5 text-fg-2" />;
+    if (dir === "B_TO_A_ONLY") return <ArrowLeft className="w-3.5 h-3.5 text-fg-2" />;
+    return <ArrowLeftRight className="w-3.5 h-3.5 text-fg-2" />;
   }
 
   const isLoadingFirst = sessionsQ.isLoading && pages.length === 0;
@@ -142,16 +142,16 @@ export default function SessionsPage() {
       />
 
       {/* Filters */}
-      <div className="bg-ink-800 border border-ink-700 rounded-[10px] shadow-card p-4 mb-6 space-y-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2">
-            <label className="text-[11px] font-mono uppercase tracking-wider text-ink-500">
+      <div className="card card-pad mb-[var(--gap)] space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4 border-b border-line">
+          <div className="flex flex-col min-w-0">
+            <label className="field-label eyebrow">
               Tenant
             </label>
             <select
               value={tenantId}
               onChange={(e) => changeTenant(e.target.value)}
-              className="h-9 px-3 bg-ink-900 border border-ink-700 text-paper rounded-md text-[13px] focus:outline-none focus:border-signal-500 focus:ring-1 focus:ring-signal-500/30 min-w-[200px]"
+              className="field w-full"
             >
               <option value="ALL">All tenants</option>
               {tenantOptions.map((t) => (
@@ -162,18 +162,18 @@ export default function SessionsPage() {
             </select>
           </div>
 
-          <div className="flex items-center gap-2 flex-1 min-w-[240px]">
-            <label className="text-[11px] font-mono uppercase tracking-wider text-ink-500">
+          <div className="flex flex-col min-w-0">
+            <label className="field-label eyebrow">
               Proxy
             </label>
-            <div className="relative flex-1">
-              <Search className="w-3.5 h-3.5 text-ink-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <div className="relative">
+              <Search className="w-4 h-4 text-fg-3 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
                 value={proxySearch}
                 onChange={(e) => setProxySearch(e.target.value)}
                 placeholder="Search proxy number"
-                className="w-full h-9 pl-9 pr-3 bg-ink-900 border border-ink-700 text-paper rounded-md text-[13px] focus:outline-none focus:border-signal-500 focus:ring-1 focus:ring-signal-500/30 font-mono"
+                className="field w-full pl-10 pr-3 font-mono"
               />
             </div>
           </div>
@@ -197,9 +197,9 @@ export default function SessionsPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-ink-800 border border-ink-700 rounded-[10px] shadow-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
+      <div className="card overflow-hidden">
+        <div className="table-scroll">
+          <table className="data-table">
             <thead>
               <tr>
                 {[
@@ -212,12 +212,7 @@ export default function SessionsPage() {
                   "Created",
                   "Expires",
                 ].map((h) => (
-                  <th
-                    key={h}
-                    className="bg-ink-900 px-4 py-2 text-[11px] font-mono uppercase tracking-wider text-ink-500 text-left"
-                  >
-                    {h}
-                  </th>
+                  <th key={h}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -226,12 +221,12 @@ export default function SessionsPage() {
                 Array.from({ length: 6 }).map((_, i) => <SkeletonRow key={i} cols={8} />)
               ) : visibleSessions.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 border-t border-ink-700">
+                  <td colSpan={8} className="py-12">
                     <div className="flex flex-col items-center justify-center text-center">
-                      <div className="w-12 h-12 rounded-md bg-ink-900 flex items-center justify-center mb-3">
-                        <Activity className="w-5 h-5 text-ink-500" />
+                      <div className="empty-icon mb-3">
+                        <Activity className="w-5 h-5 text-fg-3" />
                       </div>
-                      <div className="text-sm text-ink-300">No sessions match these filters</div>
+                      <div className="text-[15px] text-fg">No sessions match these filters</div>
                     </div>
                   </td>
                 </tr>
@@ -239,35 +234,35 @@ export default function SessionsPage() {
                 visibleSessions.map((s) => {
                   const tenant = tenantMap.get(s.tenantId);
                   return (
-                    <tr key={s.id} className="hover:bg-ink-900/60">
-                      <td className="px-4 py-3 border-t border-ink-700 text-[13px] text-paper font-mono">
+                    <tr key={s.id}>
+                      <td className="font-mono whitespace-nowrap">
                         {truncId(s.id)}
                       </td>
-                      <td className="px-4 py-3 border-t border-ink-700 text-[13px] text-ink-200">
+                      <td>
                         {tenant ? (
                           tenant.name
                         ) : (
-                          <span className="font-mono text-ink-400">{truncId(s.tenantId)}</span>
+                          <span className="font-mono text-fg-2">{truncId(s.tenantId)}</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 border-t border-ink-700 text-[13px] text-paper font-mono">
+                      <td className="font-mono whitespace-nowrap">
                         {s.proxyNumber}
                       </td>
-                      <td className="px-4 py-3 border-t border-ink-700">
+                      <td>
                         <StatePill state={s.state} />
                       </td>
-                      <td className="px-4 py-3 border-t border-ink-700">
-                        <span className="inline-flex items-center gap-1 text-ink-300 text-[12px]">
+                      <td>
+                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-sunken border border-line text-fg-2 text-[12px]">
                           {directionIcon(s.directionMode)}
                         </span>
                       </td>
-                      <td className="px-4 py-3 border-t border-ink-700 text-[13px] text-ink-200 font-mono tabular-nums">
+                      <td className="font-mono tabular-nums">
                         {s.callCount ?? 0}
                       </td>
-                      <td className="px-4 py-3 border-t border-ink-700 text-[13px] text-ink-200">
+                      <td className="text-fg-2 whitespace-nowrap">
                         {fmtRelative(s.createdAt)}
                       </td>
-                      <td className="px-4 py-3 border-t border-ink-700 text-[13px] text-ink-200">
+                      <td className="text-fg-2 whitespace-nowrap">
                         {fmtRelative(s.expiresAt)}
                       </td>
                     </tr>
@@ -279,11 +274,11 @@ export default function SessionsPage() {
         </div>
 
         {hasMore && (
-          <div className="border-t border-ink-700 px-4 py-3 flex items-center justify-center">
+          <div className="border-t border-line px-4 py-3 flex items-center justify-center">
             <button
               onClick={() => setCursor(nextCursor ?? undefined)}
               disabled={sessionsQ.isFetching}
-              className="bg-ink-800 border border-ink-700 text-paper px-4 h-9 rounded-md hover:bg-ink-700 text-sm disabled:opacity-50"
+              className="btn btn-secondary"
             >
               {sessionsQ.isFetching ? "Loading…" : "Load more"}
             </button>
@@ -306,22 +301,20 @@ function FilterRow({
   onChange: (v: string) => void;
 }) {
   return (
-    <div className="flex items-center gap-3">
-      <div className="text-[11px] font-mono uppercase tracking-wider text-ink-500 w-20 flex-shrink-0">
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4 min-w-0">
+      <div className="eyebrow text-fg-3 sm:w-20 flex-shrink-0">
         {label}
       </div>
-      <div className="flex flex-wrap gap-1.5">
+      <div className="chip-row">
         {options.map((opt) => {
           const active = value === opt.value;
           return (
             <button
               key={opt.value}
               onClick={() => onChange(opt.value)}
-              className={`px-2.5 h-7 rounded-md text-[11px] font-mono uppercase tracking-wider transition-colors ${
-                active
-                  ? "bg-signal-500 text-ink-900 font-medium"
-                  : "bg-ink-900 border border-ink-700 text-ink-300 hover:bg-ink-700"
-              }`}
+              aria-pressed={active}
+              data-active={active}
+              className="chip"
             >
               {opt.label}
             </button>

@@ -85,7 +85,7 @@ export default function CpaasPage() {
           <button
             onClick={() => cpaasQ.refetch()}
             disabled={cpaasQ.isFetching}
-            className="bg-ink-800 border border-ink-700 text-paper px-3 h-9 rounded-md hover:bg-ink-700 text-sm inline-flex items-center gap-2"
+            className="btn btn-secondary"
           >
             <RefreshCw className={`w-4 h-4 ${cpaasQ.isFetching ? "animate-spin" : ""}`} />
             Refresh
@@ -94,19 +94,19 @@ export default function CpaasPage() {
       />
 
       {cpaasQ.isLoading ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Skeleton className="h-64" />
-          <Skeleton className="h-64" />
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-[var(--gap)]">
+          <Skeleton className="h-72 rounded-card" />
+          <Skeleton className="h-72 rounded-card" />
         </div>
       ) : providers.length === 0 ? (
-        <div className="bg-ink-800 border border-ink-700 rounded-[10px] shadow-card p-8 text-center">
-          <div className="w-12 h-12 rounded-md bg-ink-900 flex items-center justify-center mx-auto mb-3">
-            <Radio className="w-5 h-5 text-ink-500" />
+        <div className="card card-pad py-14 text-center">
+          <div className="empty-icon mx-auto mb-3">
+            <Radio className="w-5 h-5 text-fg-3" />
           </div>
-          <div className="text-sm text-ink-300">No providers configured</div>
+          <div className="text-[15px] text-fg">No providers configured</div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-[var(--gap)]">
           {providers.map((cb) => (
             <ProviderCard
               key={cb.provider}
@@ -120,25 +120,25 @@ export default function CpaasPage() {
       )}
 
       {confirm && (
-        <div className="fixed inset-0 z-50 bg-ink-900/70 flex items-center justify-center p-4">
-          <div className="bg-ink-800 border border-ink-700 rounded-[10px] shadow-card p-6 w-full max-w-md">
-            <h2 className="text-lg font-semibold text-paper mb-1">
+        <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="force-circuit-title">
+          <div className="modal">
+            <h2 id="force-circuit-title" className="modal-title">
               Force circuit {confirm.state}
             </h2>
-            <p className="text-sm text-ink-400 mb-4">
+            <p className="text-sm text-fg-2 mt-2 mb-6 leading-relaxed">
               This will override the automated breaker state for{" "}
-              <span className="font-mono text-paper uppercase">{confirm.provider}</span>. New
+              <span className="font-mono text-fg uppercase">{confirm.provider}</span>. New
               sessions will{" "}
               {confirm.state === "OPEN"
                 ? "stop routing through this provider"
                 : "resume routing through this provider"}
               .
             </p>
-            <div className="flex items-center justify-end gap-2">
+            <div className="modal-actions">
               <button
                 onClick={() => setConfirm(null)}
                 disabled={busy}
-                className="bg-ink-800 border border-ink-700 text-paper px-3 h-9 rounded-md hover:bg-ink-700 text-sm"
+                className="btn btn-secondary"
               >
                 Cancel
               </button>
@@ -146,7 +146,7 @@ export default function CpaasPage() {
                 <button
                   onClick={handleForce}
                   disabled={busy}
-                  className="bg-rose-500/15 text-rose-400 border border-rose-500/30 px-4 h-9 rounded-md hover:bg-rose-500/25 text-sm disabled:opacity-50"
+                  className="btn btn-danger-soft"
                 >
                   {busy ? "Forcing…" : "Confirm Force Open"}
                 </button>
@@ -154,7 +154,7 @@ export default function CpaasPage() {
                 <button
                   onClick={handleForce}
                   disabled={busy}
-                  className="bg-signal-500 text-ink-900 px-4 h-9 rounded-md font-medium hover:bg-signal-600 text-sm disabled:opacity-50"
+                  className="btn btn-accent"
                 >
                   {busy ? "Forcing…" : "Confirm Force Close"}
                 </button>
@@ -186,77 +186,75 @@ function ProviderCard({
         : "bg-rose-500";
 
   return (
-    <div className="bg-ink-800 border border-ink-700 rounded-[10px] shadow-card p-5">
-      <div className="flex items-center justify-between mb-5">
-        <div className="text-lg font-semibold text-paper font-mono uppercase tracking-wider">
+    <section className="card card-pad card-lift flex flex-col min-w-0">
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <div className="text-[clamp(1.25rem,1.1rem+0.6vw,1.625rem)] font-normal text-fg uppercase tracking-[-0.02em] leading-tight break-all">
           {cb.provider}
         </div>
         <span
-          className={`w-6 h-6 rounded-full ${dotColor} ${cb.state === "OPEN" ? "animate-pulse" : ""}`}
+          className={`w-3.5 h-3.5 rounded-full flex-shrink-0 ring-[6px] ring-current/15 ${dotColor} ${dotColor.replace("bg-", "text-")} ${cb.state === "OPEN" ? "animate-pulse" : ""}`}
           aria-label={cb.state}
         />
       </div>
 
-      <div className="grid grid-cols-3 gap-4 mb-4">
+      {/* One tile grid: two columns on phones so badges never overflow. */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-5">
         <StatBlock label="State">
           <StatePill state={cb.state} />
         </StatBlock>
         <StatBlock label="Opened">
-          <div className="text-[13px] text-ink-200">
+          <div className="text-[13px] text-fg">
             {cb.state === "CLOSED" ? "—" : fmtRelative(cb.openedAt)}
           </div>
         </StatBlock>
         <StatBlock label="Failures">
-          <div className="text-[13px] text-paper font-mono tabular-nums">
+          <div className="text-[13px] text-fg font-mono tabular-nums">
             {fmtNumber(cb.failureCount ?? 0)}
           </div>
         </StatBlock>
-      </div>
-
-      <div className="grid grid-cols-3 gap-4 mb-4">
         <StatBlock label="Numbers in pool">
-          <div className="text-[13px] text-paper font-mono tabular-nums">
+          <div className="text-[13px] text-fg font-mono tabular-nums">
             {fmtNumber(poolCount)}
           </div>
         </StatBlock>
         <StatBlock label="Active sessions">
-          <div className="text-[13px] text-ink-500">—</div>
+          <div className="text-[13px] text-fg-3">—</div>
         </StatBlock>
         <StatBlock label="Calls today">
-          <div className="text-[13px] text-ink-500">—</div>
+          <div className="text-[13px] text-fg-3">—</div>
         </StatBlock>
       </div>
 
       {cb.lastError && (
-        <div className="bg-ink-900 border border-rose-500/30 rounded-md p-3 font-mono text-[12px] text-rose-400 mb-4 break-words">
+        <div className="callout border-rose-500/25 bg-rose-500/[0.06] font-mono text-[12px] text-rose-700 mb-5 break-words">
           {cb.lastError}
         </div>
       )}
 
       {isRoot && (
-        <div className="flex items-center gap-2 pt-2 border-t border-ink-700">
+        <div className="mt-auto flex flex-wrap items-center gap-2 pt-5 border-t border-line">
           <button
             onClick={() => onForce("OPEN")}
-            className="bg-rose-500/15 text-rose-400 border border-rose-500/30 px-4 h-9 rounded-md hover:bg-rose-500/25 text-sm"
+            className="btn btn-danger-soft"
           >
             Force Open
           </button>
           <button
             onClick={() => onForce("CLOSED")}
-            className="bg-ink-800 border border-ink-700 text-paper px-3 h-9 rounded-md hover:bg-ink-700 text-sm"
+            className="btn btn-secondary"
           >
             Force Close
           </button>
         </div>
       )}
-    </div>
+    </section>
   );
 }
 
 function StatBlock({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div>
-      <div className="text-[11px] font-mono uppercase tracking-wider text-ink-500 mb-1.5">
+    <div className="bg-sunken border border-line rounded-[14px] p-3 min-w-0">
+      <div className="eyebrow text-fg-3 mb-2">
         {label}
       </div>
       {children}

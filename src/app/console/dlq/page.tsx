@@ -152,7 +152,7 @@ export default function DlqPage() {
             type="button"
             onClick={() => dlqQ.refetch()}
             disabled={dlqQ.isFetching}
-            className="bg-ink-800 border border-ink-700 text-paper px-3 h-9 rounded-md hover:bg-ink-700 text-sm transition-colors flex items-center gap-2 disabled:opacity-60"
+            className="btn btn-secondary"
           >
             <RefreshCw
               className={`w-3.5 h-3.5 ${dlqQ.isFetching ? "animate-spin" : ""}`}
@@ -164,25 +164,29 @@ export default function DlqPage() {
 
       {/* Depth banner */}
       {dlqQ.isLoading ? (
-        <div className="bg-ink-800 border border-ink-700 rounded-[10px] shadow-card p-5 mb-4 h-[88px] animate-shimmer" />
+        <div className="rounded-card mb-[var(--gap)] h-[96px] animate-shimmer" />
       ) : count === 0 ? (
-        <div className="bg-signal-500/10 border border-signal-500/30 text-signal-500 rounded-[10px] shadow-card p-5 mb-4 flex items-center gap-3">
-          <CheckCircle2 className="w-6 h-6 flex-shrink-0" />
-          <div>
-            <div className="text-lg font-semibold">DLQ is empty</div>
-            <div className="text-xs text-signal-500/80 mt-0.5">
+        <div className="bg-signal-500/10 border border-signal-500/30 text-signal-800 rounded-card card-pad mb-[var(--gap)] flex items-center gap-4">
+          <span className="w-11 h-11 rounded-full bg-signal-500/20 flex items-center justify-center flex-shrink-0">
+            <CheckCircle2 className="w-5 h-5" />
+          </span>
+          <div className="min-w-0">
+            <div className="text-[clamp(1.125rem,1rem+0.4vw,1.375rem)] font-medium tracking-[-0.025em]">DLQ is empty</div>
+            <div className="text-[13px] text-signal-800/80 mt-0.5">
               All webhook events have been processed successfully.
             </div>
           </div>
         </div>
       ) : (
-        <div className="bg-rose-500/15 border border-rose-500/30 text-rose-400 rounded-[10px] shadow-card p-5 mb-4 flex items-start gap-3">
-          <AlertTriangle className="w-6 h-6 flex-shrink-0 mt-0.5" />
+        <div className="bg-rose-500/[0.08] border border-rose-500/25 text-rose-700 rounded-card card-pad mb-[var(--gap)] flex items-start gap-4">
+          <span className="w-11 h-11 rounded-full bg-rose-500/15 flex items-center justify-center flex-shrink-0">
+            <AlertTriangle className="w-5 h-5" />
+          </span>
           <div className="min-w-0">
-            <div className="text-lg font-bold">
+            <div className="text-[clamp(1.125rem,1rem+0.4vw,1.375rem)] font-medium tracking-[-0.025em]">
               {count} event{count === 1 ? "" : "s"} pending retry
             </div>
-            <div className="text-xs text-rose-400/80 mt-1">
+            <div className="text-[13px] text-rose-700/80 mt-1 max-w-2xl">
               These webhooks failed delivery and are queued for retry.
               Investigate any RETRYING entries that have hit their max retry
               count.
@@ -192,8 +196,8 @@ export default function DlqPage() {
       )}
 
       {/* Filter bar */}
-      <div className="bg-ink-800 border border-ink-700 rounded-[10px] shadow-card p-4 mb-4">
-        <div className="flex flex-wrap items-center gap-4">
+      <div className="card card-pad mb-[var(--gap)]">
+        <div className="flex flex-col lg:flex-row lg:flex-wrap lg:items-center gap-4">
           <FilterGroup label="Status">
             {(["ALL", "PENDING", "RETRYING", "RESOLVED", "ABANDONED"] as const).map(
               (s) => (
@@ -224,13 +228,13 @@ export default function DlqPage() {
               </FilterPill>
             ))}
           </FilterGroup>
-          <div className="flex-1" />
+          <div className="hidden lg:block flex-1" />
           {canMutate && (
             <button
               type="button"
               onClick={askRetryAll}
               disabled={count === 0 || retryM.isPending}
-              className="bg-signal-500 text-ink-900 px-4 h-10 rounded-md font-medium hover:bg-signal-600 text-sm transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn btn-accent self-start lg:self-auto"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               Retry all PENDING
@@ -240,9 +244,9 @@ export default function DlqPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-ink-800 border border-ink-700 rounded-[10px] shadow-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
+      <div className="card overflow-hidden">
+        <div className="table-scroll">
+          <table className="data-table">
             <thead>
               <tr>
                 <Th>Event ID</Th>
@@ -266,7 +270,7 @@ export default function DlqPage() {
                 <tr>
                   <td
                     colSpan={colCount}
-                    className="px-4 py-8 border-t border-ink-700 text-center text-sm text-ink-500"
+                    className="py-10 text-center text-sm text-fg-3"
                   >
                     No entries match the current filters.
                   </td>
@@ -279,22 +283,19 @@ export default function DlqPage() {
                     errStr.length > 50 ? `${errStr.slice(0, 50)}…` : errStr;
                   return (
                     <>
-                      <tr
-                        key={e.id}
-                        className="hover:bg-ink-900/60 transition-colors"
-                      >
-                        <Td className="font-mono">{truncId(e.eventId)}</Td>
+                      <tr key={e.id}>
+                        <Td className="font-mono whitespace-nowrap">{truncId(e.eventId)}</Td>
                         <Td className="font-mono uppercase">{e.provider}</Td>
                         <td
-                          className="px-4 py-3 border-t border-ink-700 text-[13px] text-ink-200 cursor-pointer max-w-[320px]"
+                          className="cursor-pointer max-w-[320px] min-w-[200px] hover:text-fg-2"
                           title={errStr}
                           onClick={() => toggleExpanded(e.id)}
                         >
                           <div className="flex items-center gap-1.5">
                             {isOpen ? (
-                              <ChevronDown className="w-3.5 h-3.5 text-ink-500 flex-shrink-0" />
+                              <ChevronDown className="w-3.5 h-3.5 text-fg-3 flex-shrink-0" />
                             ) : (
-                              <ChevronRight className="w-3.5 h-3.5 text-ink-500 flex-shrink-0" />
+                              <ChevronRight className="w-3.5 h-3.5 text-fg-3 flex-shrink-0" />
                             )}
                             <span className="truncate">{errTrunc}</span>
                           </div>
@@ -302,23 +303,23 @@ export default function DlqPage() {
                         <Td className="tabular-nums">
                           {(e.retryCount ?? 0)}/{e.maxRetries ?? 3}
                         </Td>
-                        <td className="px-4 py-3 border-t border-ink-700">
+                        <td>
                           <StatePill state={e.status} size="sm" />
                         </td>
-                        <Td className="text-ink-400">
+                        <Td className="text-fg-2 whitespace-nowrap">
                           {fmtRelative(e.firstReceivedAt)}
                         </Td>
-                        <Td className="text-ink-400">
+                        <Td className="text-fg-2 whitespace-nowrap">
                           {fmtRelative(e.lastRetryAt)}
                         </Td>
                         {canMutate && (
-                          <td className="px-4 py-3 border-t border-ink-700">
+                          <td>
                             <div className="flex items-center gap-2">
                               <button
                                 type="button"
                                 onClick={() => retryM.mutate([e.id])}
                                 disabled={retryM.isPending}
-                                className="bg-ink-800 border border-ink-700 text-paper px-2 h-7 rounded-md hover:bg-ink-700 text-[11px] transition-colors flex items-center gap-1 disabled:opacity-50"
+                                className="btn btn-secondary btn-sm"
                               >
                                 <RotateCcw className="w-3 h-3" />
                                 Retry
@@ -327,7 +328,7 @@ export default function DlqPage() {
                                 type="button"
                                 onClick={() => askAbandon(e)}
                                 disabled={abandonM.isPending}
-                                className="bg-rose-500/15 text-rose-400 border border-rose-500/30 px-2 h-7 rounded-md hover:bg-rose-500/25 text-[11px] transition-colors flex items-center gap-1 disabled:opacity-50"
+                                className="btn btn-danger-soft btn-sm"
                               >
                                 <Trash2 className="w-3 h-3" />
                                 Abandon
@@ -340,9 +341,9 @@ export default function DlqPage() {
                         <tr key={`${e.id}-detail`}>
                           <td
                             colSpan={colCount}
-                            className="px-4 py-3 border-t border-ink-700 bg-ink-900/40"
+                            className="bg-sunken/60"
                           >
-                            <div className="bg-ink-900 border border-ink-700 rounded-md p-3 font-mono text-[12px] text-rose-400 whitespace-pre-wrap break-words">
+                            <div className="code-block text-rose-300 whitespace-pre-wrap [overflow-wrap:anywhere]">
                               {errStr}
                             </div>
                           </td>
@@ -368,11 +369,7 @@ export default function DlqPage() {
 }
 
 function Th({ children }: { children: React.ReactNode }) {
-  return (
-    <th className="bg-ink-900 px-4 py-2 text-[11px] font-mono uppercase tracking-wider text-ink-500 text-left">
-      {children}
-    </th>
-  );
+  return <th>{children}</th>;
 }
 
 function Td({
@@ -383,9 +380,7 @@ function Td({
   className?: string;
 }) {
   return (
-    <td
-      className={`px-4 py-3 border-t border-ink-700 text-[13px] text-ink-200 ${className}`}
-    >
+    <td className={className}>
       {children}
     </td>
   );
@@ -399,11 +394,11 @@ function FilterGroup({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-[11px] font-mono uppercase tracking-wider text-ink-500">
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 min-w-0">
+      <span className="eyebrow text-fg-3 flex-shrink-0">
         {label}
       </span>
-      <div className="flex items-center gap-1">{children}</div>
+      <div className="chip-row">{children}</div>
     </div>
   );
 }
@@ -421,11 +416,9 @@ function FilterPill({
     <button
       type="button"
       onClick={onClick}
-      className={`px-2.5 h-7 rounded-md text-[11px] font-mono uppercase tracking-wider transition-colors ${
-        active
-          ? "bg-signal-500/15 text-signal-500 border border-signal-500/30"
-          : "bg-ink-900 text-ink-400 border border-ink-700 hover:text-paper hover:border-ink-500"
-      }`}
+      aria-pressed={active}
+      data-active={active}
+      className="chip"
     >
       {children}
     </button>
@@ -452,26 +445,26 @@ function ConfirmModal({
   }
 
   return (
-    <div className="fixed inset-0 z-40 bg-ink-900/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-ink-800 border border-ink-700 rounded-[10px] shadow-card p-6 max-w-md w-full">
-        <div className="flex items-start justify-between mb-3">
-          <h3 className="text-base font-semibold text-paper">{action.title}</h3>
+    <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="dlq-confirm-title">
+      <div className="modal">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <h3 id="dlq-confirm-title" className="modal-title">{action.title}</h3>
           <button
             type="button"
             onClick={onClose}
-            className="text-ink-500 hover:text-paper transition-colors"
+            className="icon-btn-xs -mr-1"
             aria-label="Close"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
-        <p className="text-sm text-ink-300 mb-5">{action.description}</p>
-        <div className="flex items-center justify-end gap-2">
+        <p className="text-sm text-fg-2 mb-6 leading-relaxed">{action.description}</p>
+        <div className="modal-actions">
           <button
             type="button"
             onClick={onClose}
             disabled={busy}
-            className="bg-ink-800 border border-ink-700 text-paper px-3 h-9 rounded-md hover:bg-ink-700 text-sm transition-colors disabled:opacity-50"
+            className="btn btn-secondary"
           >
             Cancel
           </button>
@@ -479,11 +472,7 @@ function ConfirmModal({
             type="button"
             onClick={go}
             disabled={busy}
-            className={
-              action.danger
-                ? "bg-rose-500/15 text-rose-400 border border-rose-500/30 px-4 h-10 rounded-md hover:bg-rose-500/25 text-sm transition-colors disabled:opacity-50"
-                : "bg-signal-500 text-ink-900 px-4 h-10 rounded-md font-medium hover:bg-signal-600 text-sm transition-colors disabled:opacity-50"
-            }
+            className={action.danger ? "btn btn-danger-soft" : "btn btn-accent"}
           >
             {busy ? "Working…" : action.confirmLabel}
           </button>

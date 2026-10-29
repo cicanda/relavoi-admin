@@ -5,9 +5,10 @@ import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getSystemHealth } from "@/lib/api";
 import { useSidebar } from "@/lib/sidebar-store";
+import { MENU_BUTTON_ID, NAV_ID } from "@/components/console/sidebar";
 
 export function Topbar() {
-  const { collapsed, openSidebar, toggleCollapsed } = useSidebar();
+  const { open, collapsed, openSidebar, toggleCollapsed } = useSidebar();
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -33,57 +34,64 @@ export function Topbar() {
   const rd = health.data?.checks?.redis ?? "unknown";
   const isHealthy = pg === "ok" && rd === "ok";
   const pillClass = isHealthy
-    ? "bg-signal-500/15 text-signal-500"
-    : "bg-rose-500/15 text-rose-400";
+    ? "bg-signal-500/15 text-signal-800"
+    : "bg-rose-500/10 text-rose-700";
   const dotClass = isHealthy ? "bg-signal-500 animate-pulse-dot" : "bg-rose-500";
   const label = isHealthy ? "Live" : "Degraded";
 
   return (
-    <header className="h-[52px] bg-ink-800 border-b border-ink-700 px-3 sm:px-4 flex items-center gap-2 sm:gap-4 flex-shrink-0">
-      {/* Two buttons rather than one branching on viewport width: the breakpoint
-          is a CSS concern and window.innerWidth is not safe to read in render. */}
-      <button
-        type="button"
-        onClick={openSidebar}
-        aria-label="Open navigation"
-        className="lg:hidden -ml-1 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-ink-300 hover:text-paper hover:bg-ink-900/50 rounded-md transition-colors"
-      >
-        <Menu className="w-5 h-5" />
-      </button>
-      <button
-        type="button"
-        onClick={toggleCollapsed}
-        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        className="hidden lg:flex -ml-1 p-2 items-center justify-center text-ink-300 hover:text-paper hover:bg-ink-900/50 rounded-md transition-colors"
-      >
-        {collapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
-      </button>
-      <div className="relative flex-1 max-w-md">
-        <Search className="w-3.5 h-3.5 text-ink-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
-        <input
-          ref={searchRef}
-          type="search"
-          placeholder="Search tenants, sessions, operators…"
-          className="w-full h-9 pl-8 pr-12 bg-ink-900 border border-ink-700 rounded-md font-mono text-[12px] text-paper placeholder:text-ink-500 focus:outline-none focus:border-signal-500 transition-colors"
-        />
-        <kbd className="hidden md:inline-flex absolute right-2 top-1/2 -translate-y-1/2 items-center gap-0.5 px-1.5 py-0.5 bg-ink-800 border border-ink-700 rounded text-[10px] font-mono text-ink-500 select-none">
-          ⌘K
-        </kbd>
-      </div>
-
-      <div className="ml-auto flex items-center gap-3">
-        <span className={`inline-flex items-center gap-1.5 px-2 py-1 ${pillClass} rounded-md font-mono text-[11px] uppercase tracking-wider`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${dotClass}`} />
-          {label}
-        </span>
-
+    // A flat, full-width bar: dashboards keep their chrome square to the page.
+    <header className="sticky top-0 z-30 bg-canvas/85 backdrop-blur-md border-b border-line flex-shrink-0">
+      <div className="min-h-16 py-2.5 sm:py-0 lg:h-[68px] max-w-[1440px] mx-auto px-[var(--gutter)] flex flex-wrap sm:flex-nowrap items-center gap-x-2 gap-y-2 sm:gap-3">
+        {/* Two buttons rather than one branching on viewport width: the breakpoint
+            is a CSS concern and window.innerWidth is not safe to read in render. */}
         <button
-          className="p-2 text-ink-400 hover:text-paper hover:bg-ink-700 rounded-md transition-colors"
-          aria-label="Notifications"
+          id={MENU_BUTTON_ID}
+          type="button"
+          onClick={openSidebar}
+          aria-label="Open navigation"
+          aria-expanded={open}
+          aria-controls={NAV_ID}
+          className="icon-btn lg:hidden -ml-2"
         >
-          <Bell className="w-4 h-4" />
+          <Menu className="w-5 h-5" />
         </button>
+        <button
+          type="button"
+          onClick={toggleCollapsed}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className="icon-btn hidden lg:inline-flex -ml-2"
+        >
+          {collapsed ? <PanelLeftOpen className="w-[18px] h-[18px]" /> : <PanelLeftClose className="w-[18px] h-[18px]" />}
+        </button>
+        {/* Below sm the search takes its own full-width row so it stays usable. */}
+        <div className="relative order-last w-full sm:order-none sm:w-auto sm:flex-1 min-w-0 sm:max-w-lg">
+          <Search className="w-4 h-4 text-fg-3 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <input
+            ref={searchRef}
+            type="search"
+            placeholder="Search tenants, sessions, operators…"
+            className="field w-full pl-10 pr-14 rounded-full bg-surface"
+          />
+          <kbd className="hidden md:inline-flex absolute right-3 top-1/2 -translate-y-1/2 items-center gap-0.5 px-1.5 py-0.5 bg-sunken border border-line rounded-md text-[10px] font-mono text-fg-3 select-none">
+            ⌘K
+          </kbd>
+        </div>
+
+        <div className="ml-auto flex items-center gap-1 sm:gap-2">
+          <span className={`badge ${pillClass}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${dotClass}`} />
+            {label}
+          </span>
+
+          <button
+            className="icon-btn"
+            aria-label="Notifications"
+          >
+            <Bell className="w-[18px] h-[18px]" />
+          </button>
+        </div>
       </div>
     </header>
   );

@@ -9,10 +9,12 @@ import {
   AlertTriangle,
   Radio,
   RefreshCw,
+  ArrowUpRight,
+  Building2,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
-import { StatePill } from "@/components/state-pill";
+import { StatePill, TierPill } from "@/components/state-pill";
 import { SkeletonRow } from "@/components/skeleton";
 import {
   getOverview,
@@ -20,7 +22,7 @@ import {
   listTenants,
 } from "@/lib/api";
 import { truncId, fmtRelative } from "@/lib/format";
-import type { Session, Tenant, Tier } from "@/lib/types";
+import type { Session, Tenant } from "@/lib/types";
 
 export default function OverviewPage() {
   const router = useRouter();
@@ -77,7 +79,7 @@ export default function OverviewPage() {
             type="button"
             onClick={refreshAll}
             disabled={refreshing}
-            className="bg-ink-800 border border-ink-700 text-paper px-3 h-9 rounded-md hover:bg-ink-700 text-sm transition-colors flex items-center gap-2 disabled:opacity-60"
+            className="btn btn-secondary"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
             Refresh
@@ -86,81 +88,72 @@ export default function OverviewPage() {
       />
 
       {/* ── Stat cards ─────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-        <StatCard
-          label="Active Sessions"
-          value={overview?.activeSessions ?? 0}
-          accent="signal"
-          icon={Activity}
-          loading={overviewQ.isLoading}
-        />
-        <StatCard
-          label="Calls Today"
-          value="—"
-          accent="sky"
-          icon={PhoneCall}
-          loading={false}
-        />
-        <StatCard
-          label="Pool Utilization"
-          value={`${overview?.poolUtilization ?? 0}%`}
-          accent="sky"
-          icon={Hash}
-          loading={overviewQ.isLoading}
-        />
-        <StatCard
-          label="DLQ Depth"
-          value={dlqDepth}
-          accent={dlqDepth > 0 ? "rose" : "ink"}
-          icon={AlertTriangle}
-          loading={overviewQ.isLoading}
-        />
-        <StatCard
-          label="Circuit State"
-          value={atState}
-          accent={atAccent}
-          icon={Radio}
-          loading={overviewQ.isLoading}
-        />
+      <div className="bento">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-1.5 [&>*:last-child]:col-span-2 lg:[&>*:last-child]:col-span-1">
+          <StatCard
+            label="Active Sessions"
+            value={overview?.activeSessions ?? 0}
+            accent="signal"
+            icon={Activity}
+            loading={overviewQ.isLoading}
+          />
+          <StatCard
+            label="Calls Today"
+            value="—"
+            accent="sky"
+            icon={PhoneCall}
+            loading={false}
+          />
+          <StatCard
+            label="Pool Utilization"
+            value={`${overview?.poolUtilization ?? 0}%`}
+            accent="sky"
+            icon={Hash}
+            loading={overviewQ.isLoading}
+          />
+          <StatCard
+            label="DLQ Depth"
+            value={dlqDepth}
+            accent={dlqDepth > 0 ? "rose" : "ink"}
+            icon={AlertTriangle}
+            loading={overviewQ.isLoading}
+          />
+          <StatCard
+            label="Circuit State"
+            value={atState}
+            accent={atAccent}
+            icon={Radio}
+            loading={overviewQ.isLoading}
+          />
+        </div>
       </div>
 
       {/* ── Active sessions + Tenants by activity ──────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 mt-4">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-[var(--gap)] mt-[var(--gap)]">
         {/* Active Sessions */}
-        <div className="lg:col-span-3 bg-ink-800 border border-ink-700 rounded-[10px] shadow-card p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-paper">Active Sessions</h2>
+        <section className="lg:col-span-3 card overflow-hidden min-w-0">
+          <div className="card-head">
+            <h2 className="card-title">Active Sessions</h2>
             <button
               type="button"
               onClick={() => router.push("/console/sessions")}
-              className="text-[11px] font-mono uppercase tracking-wider text-ink-400 hover:text-paper transition-colors"
+              className="link-action eyebrow"
             >
               View all
+              <ArrowUpRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
+          <div className="table-scroll">
+            <table className="data-table">
               <thead>
                 <tr>
-                  <th className="bg-ink-900 text-[11px] font-mono uppercase tracking-wider text-ink-500 text-left px-4 py-2">
-                    Session ID
-                  </th>
-                  <th className="bg-ink-900 text-[11px] font-mono uppercase tracking-wider text-ink-500 text-left px-4 py-2">
-                    Tenant
-                  </th>
-                  <th className="bg-ink-900 text-[11px] font-mono uppercase tracking-wider text-ink-500 text-left px-4 py-2">
-                    Proxy
-                  </th>
-                  <th className="bg-ink-900 text-[11px] font-mono uppercase tracking-wider text-ink-500 text-left px-4 py-2">
-                    Status
-                  </th>
-                  <th className="bg-ink-900 text-[11px] font-mono uppercase tracking-wider text-ink-500 text-left px-4 py-2">
-                    Calls
-                  </th>
-                  <th className="bg-ink-900 text-[11px] font-mono uppercase tracking-wider text-ink-500 text-left px-4 py-2">
-                    Created
-                  </th>
+                  <th>Session ID</th>
+                  <th>Tenant</th>
+                  <th>Proxy</th>
+                  <th>Status</th>
+                  <th>Calls</th>
+                  <th>Created</th>
                 </tr>
               </thead>
               <tbody>
@@ -177,28 +170,28 @@ export default function OverviewPage() {
                       onClick={() =>
                         router.push(`/console/sessions?focus=${encodeURIComponent(s.id)}`)
                       }
-                      className="hover:bg-ink-900/60 transition-colors cursor-pointer"
+                      className="row-link"
                     >
-                      <td className="px-4 py-3 border-t border-ink-700 text-[13px] text-ink-200 font-mono">
+                      <td className="font-mono whitespace-nowrap">
                         {truncId(s.id)}
                       </td>
-                      <td className="px-4 py-3 border-t border-ink-700 text-[13px] text-ink-200">
+                      <td>
                         {s.tenantName ? (
-                          <span className="text-ink-200">{s.tenantName}</span>
+                          <span className="text-fg">{s.tenantName}</span>
                         ) : (
-                          <span className="font-mono text-ink-300">{truncId(s.tenantId)}</span>
+                          <span className="font-mono text-fg-2">{truncId(s.tenantId)}</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 border-t border-ink-700 text-[13px] text-ink-200 font-mono">
+                      <td className="font-mono whitespace-nowrap">
                         {s.proxyNumber}
                       </td>
-                      <td className="px-4 py-3 border-t border-ink-700">
+                      <td>
                         <StatePill state={s.state} size="sm" />
                       </td>
-                      <td className="px-4 py-3 border-t border-ink-700 text-[13px] text-ink-200 tabular-nums">
+                      <td className="tabular-nums">
                         {s.callCount ?? 0}
                       </td>
-                      <td className="px-4 py-3 border-t border-ink-700 text-[13px] text-ink-400">
+                      <td className="text-fg-2 whitespace-nowrap">
                         {fmtRelative(s.createdAt)}
                       </td>
                     </tr>
@@ -207,7 +200,7 @@ export default function OverviewPage() {
                   <tr>
                     <td
                       colSpan={6}
-                      className="px-4 py-8 border-t border-ink-700 text-center text-sm text-ink-500"
+                      className="py-10 text-center text-sm text-fg-3"
                     >
                       No active sessions right now.
                     </td>
@@ -216,57 +209,65 @@ export default function OverviewPage() {
               </tbody>
             </table>
           </div>
-        </div>
+        </section>
 
         {/* Tenants by activity */}
-        <div className="lg:col-span-2 bg-ink-800 border border-ink-700 rounded-[10px] shadow-card p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-paper">Tenants by activity</h2>
+        <section className="lg:col-span-2 card min-w-0">
+          <div className="card-head">
+            <h2 className="card-title">Tenants by activity</h2>
             <button
               type="button"
               onClick={() => router.push("/console/tenants")}
-              className="text-[11px] font-mono uppercase tracking-wider text-ink-400 hover:text-paper transition-colors"
+              className="link-action eyebrow"
             >
               All tenants
+              <ArrowUpRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
-          {tenantsQ.isLoading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="h-12 rounded-md bg-ink-900 border border-ink-700 animate-shimmer"
-                />
-              ))}
-            </div>
-          ) : tenantsQ.data?.data?.length ? (
-            <ul className="space-y-1.5">
-              {tenantsQ.data.data.slice(0, 5).map((t: Tenant) => (
-                <li
-                  key={t.id}
-                  onClick={() => router.push(`/console/tenants/${t.id}`)}
-                  className="flex items-center justify-between gap-3 px-3 py-2 rounded-md hover:bg-ink-900/60 border border-transparent hover:border-ink-700 cursor-pointer transition-colors"
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[13px] text-paper font-medium truncate">{t.name}</div>
-                    <div className="text-[11px] text-ink-500 mt-0.5">active sessions: —</div>
-                  </div>
-                  <TierPill tier={t.tier} />
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="text-sm text-ink-500 text-center py-8">No tenants yet.</div>
-          )}
-        </div>
+          <div className="px-[calc(var(--card-pad)-0.5rem)] pb-[calc(var(--card-pad)-0.5rem)]">
+            {tenantsQ.isLoading ? (
+              <div className="space-y-2 px-2">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="h-14 rounded-[14px] animate-shimmer"
+                  />
+                ))}
+              </div>
+            ) : tenantsQ.data?.data?.length ? (
+              <ul className="space-y-1">
+                {tenantsQ.data.data.slice(0, 5).map((t: Tenant) => (
+                  <li
+                    key={t.id}
+                    onClick={() => router.push(`/console/tenants/${t.id}`)}
+                    className="group flex items-center justify-between gap-3 px-3 py-2.5 min-h-[56px] rounded-[14px] hover:bg-sunken cursor-pointer transition-colors"
+                  >
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <span className="w-9 h-9 rounded-full bg-mute text-fg-2 flex items-center justify-center flex-shrink-0 transition-colors group-hover:bg-ink-900 group-hover:text-white">
+                        <Building2 className="w-4 h-4" />
+                      </span>
+                      <div className="min-w-0">
+                        <div className="text-[14px] text-fg font-medium truncate tracking-[-0.01em]">{t.name}</div>
+                        <div className="text-[12px] text-fg-3 mt-0.5">active sessions: —</div>
+                      </div>
+                    </div>
+                    <TierPill tier={t.tier} />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="text-sm text-fg-3 text-center py-10">No tenants yet.</div>
+            )}
+          </div>
+        </section>
       </div>
 
       {/* ── System health strip ────────────────────────────────────────── */}
-      <div className="bg-ink-800 border border-ink-700 rounded-[10px] shadow-card p-4 mt-4">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-paper">System Health</h2>
-          <span className="text-[11px] font-mono uppercase tracking-wider text-ink-500">
+      <section className="card card-pad mt-[var(--gap)]">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <h2 className="card-title">System Health</h2>
+          <span className="eyebrow text-fg-3">
             auto-refresh 30s
           </span>
         </div>
@@ -310,7 +311,7 @@ export default function OverviewPage() {
             <HealthDot label="Twilio Circuit · not configured" color="ink" />
           )}
         </div>
-      </div>
+      </section>
     </>
   );
 }
@@ -334,25 +335,9 @@ function HealthDot({
             : "bg-ink-500";
 
   return (
-    <div className="bg-ink-900 border border-ink-700 rounded-md px-3 py-2 flex items-center gap-2">
-      <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
-      <span className="text-[12px] text-ink-200 font-mono">{label}</span>
+    <div className="bg-sunken border border-line rounded-full pl-3 pr-4 py-2 flex items-center gap-2 min-w-0">
+      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dot}`} />
+      <span className="text-[12px] text-fg font-mono break-all">{label}</span>
     </div>
-  );
-}
-
-function TierPill({ tier }: { tier: Tier }) {
-  const cfg =
-    tier === "ENTERPRISE"
-      ? "bg-signal-500/15 text-signal-500"
-      : tier === "GROWTH"
-        ? "bg-sky-500/15 text-sky-400"
-        : "bg-ink-700 text-ink-300";
-  return (
-    <span
-      className={`inline-flex items-center ${cfg} px-2 py-1 rounded-md font-mono text-[10px] uppercase tracking-wider font-medium flex-shrink-0`}
-    >
-      {tier}
-    </span>
   );
 }

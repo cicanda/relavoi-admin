@@ -49,29 +49,29 @@ function StatusChip({ status }: { status: KybStatus }) {
   const map: Record<KybStatus, { label: string; cls: string; Icon: typeof CheckCircle2 }> = {
     APPROVED: {
       label: "Approved",
-      cls: "bg-emerald-500/10 text-emerald-300 border-emerald-500/30",
+      cls: "bg-emerald-500/10 text-emerald-800 border-emerald-500/30",
       Icon: ShieldCheck,
     },
     PENDING: {
       label: "Pending review",
-      cls: "bg-amber-500/10 text-amber-300 border-amber-500/30",
+      cls: "bg-amber-500/10 text-amber-800 border-amber-500/30",
       Icon: Clock,
     },
     REJECTED: {
       label: "Rejected",
-      cls: "bg-red-500/10 text-red-300 border-red-500/30",
+      cls: "bg-red-500/10 text-red-700 border-red-500/30",
       Icon: ShieldAlert,
     },
     NOT_SUBMITTED: {
       label: "Not submitted",
-      cls: "bg-ink-900 text-ink-400 border-ink-700",
+      cls: "bg-sunken text-fg-2 border-line",
       Icon: ShieldAlert,
     },
   };
   const { label, cls, Icon } = map[status];
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[11px] font-medium ${cls}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[12px] font-medium whitespace-nowrap ${cls}`}
     >
       <Icon className="w-3 h-3" />
       {label}
@@ -82,8 +82,8 @@ function StatusChip({ status }: { status: KybStatus }) {
 function Field({ label, value }: { label: string; value: string | null }) {
   return (
     <div className="min-w-0">
-      <div className="text-[11px] font-mono uppercase tracking-wider text-ink-500">{label}</div>
-      <div className="text-[13px] text-paper mt-0.5 break-words">{value ?? "—"}</div>
+      <div className="eyebrow text-fg-3">{label}</div>
+      <div className="text-[14px] text-fg mt-1 break-words">{value ?? "—"}</div>
     </div>
   );
 }
@@ -108,15 +108,17 @@ function DocumentRow({ doc }: { doc: KybDocument }) {
   }
 
   return (
-    <li className="flex items-start gap-3 py-2.5 border-t border-ink-700 first:border-t-0">
-      <FileText className="w-4 h-4 text-ink-500 mt-0.5 shrink-0" />
+    <li className="flex items-center gap-3 py-3 border-t border-line first:border-t-0">
+      <span className="icon-tile w-9 h-9">
+        <FileText className="w-4 h-4" />
+      </span>
       <div className="min-w-0 flex-1">
-        <div className="text-[13px] text-paper break-words">{KIND_LABELS[doc.kind]}</div>
-        <div className="text-[11px] text-ink-500 break-all">
+        <div className="text-[14px] text-fg break-words">{KIND_LABELS[doc.kind]}</div>
+        <div className="text-[12px] text-fg-3 break-all mt-0.5">
           {doc.filename} · {fmtBytes(doc.sizeBytes)} ·{" "}
           {new Date(doc.uploadedAt).toLocaleDateString()}
         </div>
-        <div className="text-[10px] font-mono text-ink-600 break-all mt-0.5">
+        <div className="text-[10px] font-mono text-fg-3 break-all mt-0.5">
           sha256 {doc.sha256.slice(0, 16)}…
         </div>
       </div>
@@ -124,7 +126,7 @@ function DocumentRow({ doc }: { doc: KybDocument }) {
         type="button"
         onClick={() => void open()}
         disabled={opening}
-        className="shrink-0 inline-flex items-center gap-1.5 bg-ink-900 border border-ink-700 text-ink-200 px-2.5 h-8 rounded-md text-[12px] hover:bg-ink-700 transition-colors disabled:opacity-50"
+        className="btn btn-secondary btn-sm shrink-0"
       >
         <ExternalLink className="w-3.5 h-3.5" />
         {opening ? "Opening…" : "Open"}
@@ -177,7 +179,7 @@ export function KybPanel({ tenantId, canDecide }: { tenantId: string; canDecide:
 
   if (q.isLoading) {
     return (
-      <div className="bg-ink-800 border border-ink-700 rounded-[10px] shadow-card p-6 mb-4">
+      <div className="card card-pad mb-[var(--gap)]">
         <Skeleton className="h-4 w-48" />
         <Skeleton className="h-3 w-full mt-3" />
       </div>
@@ -186,7 +188,7 @@ export function KybPanel({ tenantId, canDecide }: { tenantId: string; canDecide:
 
   if (q.isError || !q.data) {
     return (
-      <div className="bg-ink-800 border border-ink-700 rounded-[10px] shadow-card p-6 mb-4 text-sm text-ink-400">
+      <div className="card card-pad mb-[var(--gap)] text-sm text-fg-2">
         Could not load business verification for this tenant.
       </div>
     );
@@ -197,11 +199,11 @@ export function KybPanel({ tenantId, canDecide }: { tenantId: string; canDecide:
   const pending = k.status === "PENDING";
 
   return (
-    <div className="bg-ink-800 border border-ink-700 rounded-[10px] shadow-card mb-4">
-      <div className="px-6 py-4 border-b border-ink-700 flex flex-wrap items-center justify-between gap-3">
+    <section className="card mb-[var(--gap)]">
+      <div className="card-head card-head-ruled flex-wrap">
         <div className="min-w-0">
-          <h2 className="text-sm font-semibold text-paper">Business verification</h2>
-          <p className="text-[12px] text-ink-400 mt-0.5">
+          <h2 className="card-title">Business verification</h2>
+          <p className="card-sub">
             {k.submittedAt
               ? `Submitted ${new Date(k.submittedAt).toLocaleString()}`
               : "Never submitted"}
@@ -212,18 +214,18 @@ export function KybPanel({ tenantId, canDecide }: { tenantId: string; canDecide:
         <StatusChip status={k.status} />
       </div>
 
-      <div className="p-6 space-y-5">
+      <div className="card-pad space-y-6">
         {k.status === "REJECTED" && k.rejectionReason && (
-          <div className="rounded-md border border-red-500/30 bg-red-500/10 p-3">
-            <div className="text-[12px] font-medium text-red-300">Rejection reason</div>
-            <p className="text-[12px] text-red-200/90 mt-1 whitespace-pre-wrap break-words">
+          <div className="callout border-red-500/30 bg-red-500/[0.07]">
+            <div className="text-[12px] font-medium text-red-700">Rejection reason</div>
+            <p className="text-[12px] text-red-800/90 mt-1 whitespace-pre-wrap break-words">
               {k.rejectionReason}
             </p>
           </div>
         )}
 
         {(k.missingDetails.length > 0 || k.missingKinds.length > 0) && k.status !== "APPROVED" && (
-          <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-[12px] text-amber-200">
+          <div className="callout border-amber-500/30 bg-amber-500/10 text-amber-900 space-y-0.5">
             {k.missingDetails.length > 0 && (
               <div>Missing details: {k.missingDetails.join(", ")}</div>
             )}
@@ -235,7 +237,7 @@ export function KybPanel({ tenantId, canDecide }: { tenantId: string; canDecide:
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-x-5 gap-y-5">
           <Field label="Registered name" value={d.legalName} />
           <Field
             label="Registration"
@@ -259,11 +261,11 @@ export function KybPanel({ tenantId, canDecide }: { tenantId: string; canDecide:
         </div>
 
         <div>
-          <h3 className="text-[12px] font-mono uppercase tracking-wider text-ink-500 mb-1">
+          <h3 className="eyebrow text-fg-3 mb-2">
             Documents ({k.documents.length})
           </h3>
           {k.documents.length === 0 ? (
-            <p className="text-[12px] text-ink-500 py-2">No documents uploaded.</p>
+            <p className="text-[12px] text-fg-3 py-2">No documents uploaded.</p>
           ) : (
             <ul>
               {k.documents.map((doc) => (
@@ -274,9 +276,9 @@ export function KybPanel({ tenantId, canDecide }: { tenantId: string; canDecide:
         </div>
 
         {pending && (
-          <div className="pt-4 border-t border-ink-700 flex flex-col sm:flex-row gap-2 sm:justify-end">
+          <div className="pt-5 border-t border-line flex flex-col sm:flex-row gap-2 sm:justify-end">
             {!canDecide ? (
-              <p className="text-[12px] text-ink-500">
+              <p className="text-[12px] text-fg-3">
                 Viewing only. Approving or rejecting requires SRE or ROOT.
               </p>
             ) : (
@@ -284,14 +286,14 @@ export function KybPanel({ tenantId, canDecide }: { tenantId: string; canDecide:
                 <button
                   type="button"
                   onClick={() => setConfirm("reject")}
-                  className="bg-ink-900 border border-red-500/40 text-red-300 px-4 h-10 rounded-md text-sm hover:bg-red-500/10 transition-colors"
+                  className="btn btn-danger-soft"
                 >
                   Reject
                 </button>
                 <button
                   type="button"
                   onClick={() => setConfirm("approve")}
-                  className="bg-paper text-ink-900 px-4 h-10 rounded-md text-sm font-medium hover:bg-ink-200 transition-colors"
+                  className="btn btn-primary"
                 >
                   Approve
                 </button>
@@ -306,7 +308,7 @@ export function KybPanel({ tenantId, canDecide }: { tenantId: string; canDecide:
         title="Approve this business?"
         description={
           <>
-            <span className="text-paper">{d.legalName ?? k.workspaceName}</span> will be able to
+            <span className="text-fg">{d.legalName ?? k.workspaceName}</span> will be able to
             activate live mode and place real, billable calls carrying real subscriber numbers.
           </>
         }
@@ -330,7 +332,7 @@ export function KybPanel({ tenantId, canDecide }: { tenantId: string; canDecide:
         }}
         onConfirm={() => rejectMut.mutate()}
       >
-        <label className="block text-[12px] font-medium text-ink-300 mb-1.5">
+        <label className="block text-[13px] font-medium text-fg-2 mb-2">
           Reason (at least {MIN_REASON} characters)
         </label>
         <textarea
@@ -338,14 +340,14 @@ export function KybPanel({ tenantId, canDecide }: { tenantId: string; canDecide:
           onChange={(e) => setReason(e.target.value)}
           rows={4}
           placeholder="The certificate of registration is illegible. Please upload a clearer scan."
-          className="w-full px-3 py-2 bg-ink-900 border border-ink-700 rounded-md text-[13px] text-paper placeholder:text-ink-600 focus:outline-none focus:border-ink-500 transition-colors"
+          className="field w-full"
         />
-        <div className="mt-1 text-[11px] text-ink-500">
+        <div className="mt-1.5 text-[12px] text-fg-3">
           {reason.trim().length < MIN_REASON
             ? `${MIN_REASON - reason.trim().length} more characters needed`
             : `${reason.trim().length} characters`}
         </div>
       </ConfirmDialog>
-    </div>
+    </section>
   );
 }

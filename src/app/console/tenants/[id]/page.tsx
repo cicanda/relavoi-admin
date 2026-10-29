@@ -14,7 +14,7 @@ import {
   Lock,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
-import { StatePill } from "@/components/state-pill";
+import { StatePill, TierPill } from "@/components/state-pill";
 import { Skeleton, SkeletonRow } from "@/components/skeleton";
 import { useToast } from "@/components/toast";
 import { ConfirmDialog } from "@/components/console/confirm-dialog";
@@ -168,7 +168,7 @@ export default function TenantDetailPage({
     return (
       <>
         <BackLink />
-        <div className="bg-ink-800 border border-ink-700 rounded-[10px] shadow-card p-6">
+        <div className="card card-pad">
           <Skeleton className="h-6 w-64" />
           <Skeleton className="h-4 w-40 mt-3" />
         </div>
@@ -181,14 +181,14 @@ export default function TenantDetailPage({
       <>
         <BackLink />
         <PageHeader title="Tenant not found" />
-        <div className="bg-ink-800 border border-ink-700 rounded-[10px] shadow-card p-6 text-sm text-ink-400">
+        <div className="card card-pad text-sm text-fg-2">
           We couldn&apos;t load this tenant. It may have been deleted or your session may have
           expired.
           <div className="mt-4">
             <button
               type="button"
               onClick={() => router.push("/console/tenants")}
-              className="bg-ink-900 border border-ink-700 text-paper px-3 h-9 rounded-md hover:bg-ink-700 text-sm transition-colors"
+              className="btn btn-secondary"
             >
               Back to tenants
             </button>
@@ -203,16 +203,16 @@ export default function TenantDetailPage({
       <BackLink />
 
       {/* Header card */}
-      <div className="bg-ink-800 border border-ink-700 rounded-[10px] shadow-card p-6 mb-4">
-        <div className="flex items-start gap-4 flex-wrap">
-          <div className="w-12 h-12 rounded-md bg-ink-900 flex items-center justify-center flex-shrink-0">
-            <Building2 className="w-5 h-5 text-ink-400" />
+      <div className="card card-pad mb-[var(--gap)]">
+        <div className="flex items-start gap-4">
+          <div className="icon-tile w-12 h-12 hidden sm:flex">
+            <Building2 className="w-5 h-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <h1 className="text-2xl font-semibold text-paper tracking-tight truncate">
+            <h1 className="text-[length:var(--text-display)] font-normal text-fg tracking-[-0.035em] leading-[1.1] break-words">
               {tenant.name}
             </h1>
-            <div className="mt-2 flex items-center flex-wrap gap-2">
+            <div className="mt-3 flex items-center flex-wrap gap-2">
               <TierPill tier={tenant.tier} />
               {/* Status is a control, not a label: suspending a workspace is an
                   operator action that belongs where the status is read. */}
@@ -225,7 +225,7 @@ export default function TenantDetailPage({
                     if (next !== (tenant.status ?? "ACTIVE")) setPendingStatus(next);
                   }}
                   aria-label="Workspace status"
-                  className="bg-ink-900 border border-ink-700 text-ink-200 text-[12px] h-7 rounded-md px-2 focus:outline-none focus:border-ink-500 transition-colors disabled:opacity-50"
+                  className="field rounded-full min-h-[var(--control-sm-h)] pl-3.5 pr-8 disabled:opacity-50"
                 >
                   {STATUSES.map((st) => (
                     <option key={st} value={st}>
@@ -237,15 +237,15 @@ export default function TenantDetailPage({
                 tenant.status && <StatePill state={tenant.status} size="sm" />
               )}
               {tenant.billingEmail && (
-                <span className="text-xs text-ink-400">{tenant.billingEmail}</span>
+                <span className="text-[13px] text-fg-2 break-all">{tenant.billingEmail}</span>
               )}
             </div>
-            <div className="mt-3 flex items-center gap-2 text-[11px] font-mono text-ink-500">
-              <span>id: {id}</span>
+            <div className="mt-4 flex items-center gap-2 text-[11px] font-mono text-fg-3 min-w-0">
+              <span className="break-all">id: {id}</span>
               <button
                 type="button"
                 onClick={copyId}
-                className="text-ink-400 hover:text-paper p-1 rounded transition-colors"
+                className="icon-btn-xs flex-shrink-0"
                 aria-label="Copy tenant ID"
                 title="Copy tenant ID"
               >
@@ -261,14 +261,14 @@ export default function TenantDetailPage({
       <KybPanel tenantId={id} canDecide={canEdit} />
 
       {/* 2x2 grid of cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-[var(--gap)]">
         {/* Card 1 — Configuration */}
         <SectionCard
           title="Configuration"
           subtitle={canEdit ? "Editable" : "Read-only (insufficient role)"}
           right={
             !canEdit && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-mono uppercase tracking-wider text-ink-500">
+              <span className="inline-flex items-center gap-1 eyebrow text-fg-3">
                 <Lock className="w-3 h-3" />
                 Locked
               </span>
@@ -276,12 +276,12 @@ export default function TenantDetailPage({
           }
         >
           <fieldset disabled={!canEdit} className={!canEdit ? "opacity-60" : ""}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-4">
               <Field label="Tier">
                 <select
                   value={form.tier}
                   onChange={(e) => setForm({ ...form, tier: e.target.value as Tier })}
-                  className="w-full h-9 px-3 bg-ink-900 border border-ink-700 text-paper rounded-md text-[13px] focus:outline-none focus:border-signal-500 focus:ring-1 focus:ring-signal-500/30 transition-colors"
+                  className="field w-full"
                 >
                   {TIERS.map((tier) => (
                     <option key={tier} value={tier}>
@@ -296,7 +296,7 @@ export default function TenantDetailPage({
                   type="url"
                   value={form.webhookUrl}
                   onChange={(e) => setForm({ ...form, webhookUrl: e.target.value })}
-                  className="w-full h-9 px-3 bg-ink-900 border border-ink-700 text-paper rounded-md text-[13px] focus:outline-none focus:border-signal-500 focus:ring-1 focus:ring-signal-500/30 transition-colors"
+                  className="field w-full"
                   placeholder="https://example.com/webhooks/relavoi"
                 />
               </Field>
@@ -306,7 +306,7 @@ export default function TenantDetailPage({
                   type="tel"
                   value={form.supportPhone}
                   onChange={(e) => setForm({ ...form, supportPhone: e.target.value })}
-                  className="w-full h-9 px-3 bg-ink-900 border border-ink-700 text-paper rounded-md text-[13px] focus:outline-none focus:border-signal-500 focus:ring-1 focus:ring-signal-500/30 transition-colors font-mono"
+                  className="field w-full font-mono"
                   placeholder="+234XXXXXXXXXX"
                 />
               </Field>
@@ -322,7 +322,7 @@ export default function TenantDetailPage({
                       defaultGracePeriod: Number(e.target.value) || 0,
                     })
                   }
-                  className="w-full h-9 px-3 bg-ink-900 border border-ink-700 text-paper rounded-md text-[13px] focus:outline-none focus:border-signal-500 focus:ring-1 focus:ring-signal-500/30 transition-colors tabular-nums"
+                  className="field w-full tabular-nums"
                 />
               </Field>
 
@@ -336,7 +336,7 @@ export default function TenantDetailPage({
                         .value as (typeof CONSENT_MODES)[number],
                     })
                   }
-                  className="w-full h-9 px-3 bg-ink-900 border border-ink-700 text-paper rounded-md text-[13px] focus:outline-none focus:border-signal-500 focus:ring-1 focus:ring-signal-500/30 transition-colors"
+                  className="field w-full"
                 >
                   {CONSENT_MODES.map((m) => (
                     <option key={m} value={m}>
@@ -356,7 +356,7 @@ export default function TenantDetailPage({
                         .value as (typeof EXPIRED_BEHAVIORS)[number],
                     })
                   }
-                  className="w-full h-9 px-3 bg-ink-900 border border-ink-700 text-paper rounded-md text-[13px] focus:outline-none focus:border-signal-500 focus:ring-1 focus:ring-signal-500/30 transition-colors"
+                  className="field w-full"
                 >
                   {EXPIRED_BEHAVIORS.map((b) => (
                     <option key={b} value={b}>
@@ -373,7 +373,7 @@ export default function TenantDetailPage({
                   onChange={(e) =>
                     setForm({ ...form, pushTitleTemplate: e.target.value })
                   }
-                  className="w-full h-9 px-3 bg-ink-900 border border-ink-700 text-paper rounded-md text-[13px] focus:outline-none focus:border-signal-500 focus:ring-1 focus:ring-signal-500/30 transition-colors"
+                  className="field w-full"
                   placeholder="Your {brand} agent is calling"
                 />
               </Field>
@@ -385,14 +385,14 @@ export default function TenantDetailPage({
                   onChange={(e) =>
                     setForm({ ...form, pushBodyTemplate: e.target.value })
                   }
-                  className="w-full h-9 px-3 bg-ink-900 border border-ink-700 text-paper rounded-md text-sm focus:outline-none focus:border-signal-500 focus:ring-1 focus:ring-signal-500/30 transition-colors"
+                  className="field w-full"
                   placeholder="Tap to view details"
                 />
               </Field>
             </div>
 
             {/* Toggles */}
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
               <Toggle
                 label="Recording enabled"
                 value={form.recordingEnabled}
@@ -415,12 +415,12 @@ export default function TenantDetailPage({
           </fieldset>
 
           {canEdit && (
-            <div className="mt-5 flex justify-end">
+            <div className="mt-6 pt-5 border-t border-line flex justify-end">
               <button
                 type="button"
                 onClick={onSave}
                 disabled={tierMutation.isPending}
-                className="bg-signal-500 text-ink-900 px-4 h-10 rounded-md font-medium hover:bg-signal-600 transition-colors text-sm disabled:opacity-60"
+                className="btn btn-accent"
               >
                 {tierMutation.isPending ? "Saving…" : "Save changes"}
               </button>
@@ -430,13 +430,13 @@ export default function TenantDetailPage({
 
         {/* Card 2 — Usage Summary */}
         <SectionCard title="Usage Summary" subtitle="Last 30 days">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             <UsageStat label="Active sessions" value="—" />
             <UsageStat label="Calls (30d)" value="—" />
             <UsageStat label="SMS (30d)" value="—" />
             <UsageStat label="Numbers in use" value="—" />
           </div>
-          <p className="mt-4 text-xs text-ink-500">
+          <p className="mt-4 text-xs text-fg-3">
             Usage details endpoint coming soon.
           </p>
         </SectionCard>
@@ -453,12 +453,12 @@ export default function TenantDetailPage({
       </div>
 
       {/* Recent Sessions */}
-      <div className="bg-ink-800 border border-ink-700 rounded-[10px] shadow-card mt-4">
-        <div className="px-5 py-3 border-b border-ink-700">
-          <h2 className="text-sm font-semibold text-paper">Recent Sessions</h2>
+      <section className="card overflow-hidden mt-[var(--gap)]">
+        <div className="card-head">
+          <h2 className="card-title">Recent Sessions</h2>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
+        <div className="table-scroll">
+          <table className="data-table">
             <thead>
               <tr>
                 <PlainHeader label="Session ID" />
@@ -477,20 +477,20 @@ export default function TenantDetailPage({
                 </>
               ) : recentSessionsQ.data?.data?.length ? (
                 recentSessionsQ.data.data.map((s: Session) => (
-                  <tr key={s.id} className="hover:bg-ink-900/60 transition-colors">
-                    <td className="px-4 py-3 border-t border-ink-700 text-[13px] text-ink-200 font-mono">
+                  <tr key={s.id}>
+                    <td className="font-mono whitespace-nowrap">
                       {truncId(s.id)}
                     </td>
-                    <td className="px-4 py-3 border-t border-ink-700 text-[13px] text-ink-200 font-mono">
+                    <td className="font-mono whitespace-nowrap">
                       {s.proxyNumber}
                     </td>
-                    <td className="px-4 py-3 border-t border-ink-700">
+                    <td>
                       <StatePill state={s.state} size="sm" />
                     </td>
-                    <td className="px-4 py-3 border-t border-ink-700 text-[13px] text-ink-200 tabular-nums">
+                    <td className="tabular-nums">
                       {s.callCount ?? 0}
                     </td>
-                    <td className="px-4 py-3 border-t border-ink-700 text-[13px] text-ink-400">
+                    <td className="text-fg-2 whitespace-nowrap">
                       {fmtRelative(s.createdAt)}
                     </td>
                   </tr>
@@ -499,7 +499,7 @@ export default function TenantDetailPage({
                 <tr>
                   <td
                     colSpan={5}
-                    className="px-4 py-8 border-t border-ink-700 text-center text-sm text-ink-500"
+                    className="py-10 text-center text-sm text-fg-3"
                   >
                     No recent sessions for this tenant.
                   </td>
@@ -508,7 +508,7 @@ export default function TenantDetailPage({
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
 
       <ConfirmDialog
         open={pendingStatus !== null}
@@ -516,7 +516,7 @@ export default function TenantDetailPage({
         danger={pendingStatus !== "ACTIVE"}
         description={
           <>
-            <span className="text-paper">{tenant.name}</span> is currently{" "}
+            <span className="text-fg">{tenant.name}</span> is currently{" "}
             {tenant.status ?? "ACTIVE"}.{" "}
             {pendingStatus ? STATUS_EFFECT[pendingStatus] : ""}
           </>
@@ -534,10 +534,10 @@ export default function TenantDetailPage({
 
 function BackLink() {
   return (
-    <div className="mb-4">
+    <div className="mb-[var(--gap)]">
       <Link
         href="/console/tenants"
-        className="inline-flex items-center gap-1.5 text-sm text-ink-400 hover:text-paper transition-colors"
+        className="btn btn-ghost btn-sm -ml-3"
       >
         <ArrowLeft className="w-3.5 h-3.5" />
         Tenants
@@ -558,23 +558,23 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-ink-800 border border-ink-700 rounded-[10px] shadow-card p-5">
-      <div className="flex items-center justify-between gap-2 mb-4">
-        <div>
-          <h2 className="text-sm font-semibold text-paper">{title}</h2>
-          {subtitle && <p className="text-xs text-ink-500 mt-0.5">{subtitle}</p>}
+    <section className="card card-pad min-w-0">
+      <div className="flex items-start justify-between gap-3 mb-5">
+        <div className="min-w-0">
+          <h2 className="card-title">{title}</h2>
+          {subtitle && <p className="card-sub">{subtitle}</p>}
         </div>
         {right}
       </div>
       {children}
-    </div>
+    </section>
   );
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="block text-[11px] font-mono uppercase tracking-wider text-ink-400 mb-1.5">
+      <span className="field-label eyebrow">
         {label}
       </span>
       {children}
@@ -598,19 +598,20 @@ function Toggle({
       type="button"
       onClick={() => !disabled && onChange(!value)}
       disabled={disabled}
-      className={`flex items-center justify-between w-full px-3 h-10 bg-ink-900 border border-ink-700 rounded-md transition-colors ${
-        disabled ? "" : "hover:border-ink-600"
+      aria-pressed={value}
+      className={`flex items-center justify-between gap-3 w-full px-4 min-h-[var(--control-h)] py-2 bg-sunken border border-line rounded-[14px] text-left transition-colors ${
+        disabled ? "" : "hover:border-line-strong hover:bg-surface"
       }`}
     >
-      <span className="text-[13px] text-ink-200">{label}</span>
+      <span className="text-[13px] text-fg">{label}</span>
       <span
-        className={`w-9 h-5 rounded-full relative transition-colors ${
-          value ? "bg-signal-500" : "bg-ink-700"
+        className={`w-10 h-6 rounded-full relative flex-shrink-0 transition-colors ${
+          value ? "bg-signal-500" : "bg-line-strong"
         }`}
       >
         <span
-          className={`absolute top-0.5 w-4 h-4 rounded-full bg-paper shadow transition-transform ${
-            value ? "translate-x-4" : "translate-x-0.5"
+          className={`absolute top-1 w-4 h-4 rounded-full bg-paper shadow-sm transition-transform ${
+            value ? "translate-x-5" : "translate-x-1"
           }`}
         />
       </span>
@@ -620,37 +621,17 @@ function Toggle({
 
 function UsageStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-ink-900 border border-ink-700 rounded-md px-3 py-3">
-      <div className="text-[11px] font-mono uppercase tracking-wider text-ink-400">
+    <div className="bg-sunken border border-line rounded-[14px] px-4 py-4 min-w-0">
+      <div className="eyebrow text-fg-2">
         {label}
       </div>
-      <div className="mt-1 text-xl font-semibold text-paper tabular-nums">{value}</div>
+      <div className="mt-3 text-[28px] font-light text-fg tabular-nums tracking-[-0.04em] leading-none">{value}</div>
     </div>
   );
 }
 
 function PlainHeader({ label }: { label: string }) {
-  return (
-    <th className="bg-ink-900 text-[11px] font-mono uppercase tracking-wider text-ink-500 text-left px-4 py-2">
-      {label}
-    </th>
-  );
-}
-
-function TierPill({ tier }: { tier: Tier }) {
-  const cfg =
-    tier === "ENTERPRISE"
-      ? "bg-signal-500/15 text-signal-500"
-      : tier === "GROWTH"
-        ? "bg-sky-500/15 text-sky-400"
-        : "bg-ink-700 text-ink-300";
-  return (
-    <span
-      className={`inline-flex items-center ${cfg} px-2 py-1 rounded-md font-mono text-[11px] uppercase tracking-wider font-medium`}
-    >
-      {tier}
-    </span>
-  );
+  return <th>{label}</th>;
 }
 
 function OnboardingFields({
@@ -676,13 +657,13 @@ function OnboardingFields({
   ];
 
   return (
-    <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
+    <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4">
       {items.map((it) => (
-        <div key={it.label}>
-          <dt className="text-[11px] font-mono uppercase tracking-wider text-ink-400">
+        <div key={it.label} className="min-w-0">
+          <dt className="eyebrow text-fg-3">
             {it.label}
           </dt>
-          <dd className="mt-0.5 text-[13px] text-ink-200 break-words">{it.value}</dd>
+          <dd className="mt-1 text-[14px] text-fg break-words">{it.value}</dd>
         </div>
       ))}
     </dl>
@@ -731,7 +712,7 @@ function ComplianceRows({
         {COMPLIANCE_DOCS.map((d) => (
           <div
             key={d.label}
-            className="h-10 rounded-md bg-ink-900 border border-ink-700 animate-shimmer"
+            className="h-12 rounded-[14px] animate-shimmer"
           />
         ))}
       </div>
@@ -746,17 +727,17 @@ function ComplianceRows({
         return (
           <li
             key={doc.label}
-            className="flex items-center gap-3 px-3 py-2.5 bg-ink-900 border border-ink-700 rounded-md"
+            className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 bg-sunken border border-line rounded-[14px]"
           >
             {accepted ? (
-              <CheckCircle2 className="w-4 h-4 text-signal-500 flex-shrink-0" />
+              <CheckCircle2 className="w-4 h-4 text-signal-700 flex-shrink-0" />
             ) : (
-              <Circle className="w-4 h-4 text-ink-500 flex-shrink-0" />
+              <Circle className="w-4 h-4 text-fg-3 flex-shrink-0" />
             )}
             <div className="flex-1 min-w-0">
-              <div className="text-[13px] text-paper font-medium">{doc.label}</div>
+              <div className="text-[13px] text-fg font-medium">{doc.label}</div>
             </div>
-            <div className="text-[12px] text-ink-400 font-mono">
+            <div className="text-[12px] text-fg-3 font-mono">
               {entry ? fmtAbsolute(entry.createdAt) : "—"}
             </div>
           </li>

@@ -7,7 +7,7 @@ import { useAdminAuth, clearPersistedAdminToken } from "@/lib/auth-store";
 import { getOverview, listTenants } from "@/lib/api";
 import { BrandLogo, BrandMark } from "@/components/brand-mark";
 import { useSidebar } from "@/lib/sidebar-store";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { RolePill } from "@/components/state-pill";
 import {
   LayoutDashboard,
@@ -23,7 +23,12 @@ import {
   Cpu,
   ShieldCheck,
   LogOut,
+  X,
 } from "lucide-react";
+
+/** Shared with the topbar's menu button for aria-controls and focus return. */
+export const NAV_ID = "console-nav";
+export const MENU_BUTTON_ID = "console-menu-button";
 
 interface NavItem {
   label: string;
@@ -75,6 +80,7 @@ const NAV: NavGroup[] = [
 export function Sidebar() {
   const { open, collapsed, closeSidebar } = useSidebar();
   const isDesktop = useIsDesktop();
+  const closeRef = useRef<HTMLButtonElement>(null);
 
   // Escape closes the overlay; lock the page behind it while it is covered.
   useEffect(() => {
@@ -90,6 +96,16 @@ export function Sidebar() {
       document.body.style.overflow = prev;
     };
   }, [open, closeSidebar]);
+
+  // Focus moves into the sheet when it opens and back to the menu button when
+  // it closes, so keyboard users are never left behind the overlay.
+  const wasOpen = useRef(false);
+  useEffect(() => {
+    if (isDesktop) return;
+    if (open) closeRef.current?.focus();
+    else if (wasOpen.current) document.getElementById(MENU_BUTTON_ID)?.focus();
+    wasOpen.current = open;
+  }, [open, isDesktop]);
 
   const path = usePathname();
   const { operator } = useAdminAuth();
@@ -128,43 +144,61 @@ export function Sidebar() {
     window.location.assign("/login");
   }
 
+  // Below lg the panel is an off-canvas sheet. While it is hidden it must not
+  // be reachable by keyboard or screen reader; while open it is a modal sheet.
+  const hiddenSheet = !isDesktop && !open;
+  const sheetProps = !isDesktop && open ? { role: "dialog" as const, "aria-modal": true } : {};
+
   return (
     <>
       {open && (
         <div
           onClick={closeSidebar}
           aria-hidden="true"
-          className="fixed inset-0 z-40 bg-ink-950/60 lg:hidden"
+          className="fixed inset-0 z-40 bg-ink-950/50 backdrop-blur-[3px] animate-fade lg:hidden"
         />
       )}
 
       <aside
+        id={NAV_ID}
+        aria-label="Console navigation"
         data-open={open ? "true" : "false"}
+        inert={hiddenSheet}
+        {...sheetProps}
         // Below lg the panel slides over the content; from lg it is an in-flow
         // column and must carry no transform at all.
-        style={isDesktop ? undefined : { transform: open ? "translateX(0)" : "translateX(-100%)" }}
+        style={isDesktop ? undefined : { transform: open ? "translateX(0)" : "translateX(calc(-100% - 1rem))" }}
         className={[
-          "sidebar-panel",
-          "fixed inset-y-0 left-0 z-50 w-[17rem] flex flex-col bg-ink-800 border-r border-ink-700",
-          "lg:static lg:z-auto lg:h-screen lg:flex-shrink-0",
-          collapsed ? "lg:w-16" : "lg:w-60",
+          "sidebar-panel panel-dark",
+          "fixed top-2 bottom-2 left-2 z-50 w-[min(18rem,calc(100vw-1rem))] flex flex-col rounded-[24px] shadow-[var(--shadow-pop)] overflow-hidden",
+          "lg:sticky lg:top-3 lg:bottom-auto lg:left-auto lg:z-auto lg:m-3 lg:mr-0 lg:h-[calc(100vh-1.5rem)] lg:self-start lg:flex-shrink-0 lg:shadow-none",
+          collapsed ? "lg:w-[4.5rem]" : "lg:w-64",
         ].join(" ")}
       >
       {/* Brand */}
-      <div className={`px-4 py-4 border-b border-ink-700 ${collapsed ? "lg:px-0 lg:flex lg:justify-center" : ""}`}>
+      <div className={`px-5 pt-5 pb-4 flex items-start justify-between gap-2 ${collapsed ? "lg:px-0 lg:justify-center" : ""}`}>
         <div className={collapsed ? "hidden lg:block" : "hidden"}>
-          <BrandMark size={32} />
+          <BrandMark size={36} />
         </div>
         <div className={`min-w-0 ${collapsed ? "lg:hidden" : ""}`}>
           <BrandLogo height={30} />
-          <div className="mt-1.5 text-[11px] font-mono text-ink-500 uppercase tracking-wider truncate">{envLabel}</div>
+          <div className="mt-2 eyebrow text-ink-400 truncate">{envLabel}</div>
         </div>
+        <button
+          ref={closeRef}
+          type="button"
+          onClick={closeSidebar}
+          aria-label="Close navigation"
+          className="lg:hidden -mr-2 -mt-1 w-11 h-11 flex items-center justify-center rounded-full text-ink-300 hover:text-white hover:bg-white/10 transition-colors"
+        >
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-4">
+      <nav aria-label="Console" className={`flex-1 overflow-y-auto px-3 pb-3 space-y-5 ${collapsed ? "lg:px-2" : ""}`}>
         {NAV.map((group) => (
           <div key={group.label}>
-            <div className="px-2 pb-1 text-[11px] font-mono uppercase tracking-wider text-ink-500">
+            <div className={`px-3 pb-1.5 eyebrow text-ink-500 ${collapsed ? "lg:sr-only" : ""}`}>
               {group.label}
             </div>
             <div className="space-y-0.5">
@@ -178,25 +212,26 @@ export function Sidebar() {
                     key={item.href}
                     href={item.href}
                     onClick={closeSidebar}
+                    aria-current={active ? "page" : undefined}
                     title={collapsed ? item.label : undefined}
-                    className={`flex items-center gap-2.5 rounded-md text-[13px] transition-colors relative min-h-[44px] lg:min-h-0 px-2 py-2.5 lg:py-1.5 ${
+                    className={`group flex items-center gap-3 rounded-[12px] text-[14px] tracking-[-0.01em] transition-colors relative min-h-[44px] lg:min-h-[38px] px-3 ${
                       collapsed ? "lg:justify-center lg:px-0" : ""
                     } ${
                       active
-                        ? "bg-ink-900/70 text-paper font-medium"
-                        : "text-ink-300 hover:bg-ink-900/40 hover:text-paper"
+                        ? "bg-white/[0.09] text-white"
+                        : "text-ink-300 hover:bg-white/[0.05] hover:text-white"
                     }`}
                   >
-                    {active && <span className="absolute left-0 top-1.5 bottom-1.5 w-[2px] bg-signal-500 rounded-r-full" />}
-                    <Icon className={`w-4 h-4 flex-shrink-0 ${active ? "text-paper" : "text-ink-500"}`} />
+                    {active && <span className="absolute left-0 top-2 bottom-2 w-[3px] bg-signal-500 rounded-r-full" />}
+                    <Icon className={`w-[18px] h-[18px] flex-shrink-0 transition-colors ${active ? "text-signal-500" : "text-ink-400 group-hover:text-ink-200"}`} />
                     <span className={`flex-1 ${collapsed ? "lg:hidden" : ""}`}>{item.label}</span>
                     {showCount && (
                       <span
-                        className={`text-[10px] font-mono font-medium px-1.5 py-0.5 rounded-md ${
+                        className={`font-mono text-[10px] min-w-[1.375rem] h-[1.375rem] px-1.5 inline-flex items-center justify-center rounded-full ${
                           item.badgeDanger
-                            ? "bg-rose-500/20 text-rose-400"
-                            : "bg-ink-700 text-ink-300"
-                        }`}
+                            ? "bg-rose-500/20 text-rose-300"
+                            : "bg-white/10 text-ink-200"
+                        } ${collapsed ? "lg:absolute lg:top-0.5 lg:right-1 lg:min-w-4 lg:h-4 lg:px-1 lg:text-[9px]" : ""}`}
                       >
                         {count}
                       </span>
@@ -210,17 +245,17 @@ export function Sidebar() {
       </nav>
 
       {/* Operator footer */}
-      <div className="border-t border-ink-700 px-3 py-3 flex items-center gap-3">
-        <div className="w-8 h-8 rounded-full bg-ink-700 text-paper flex items-center justify-center text-xs font-medium">
+      <div className={`m-3 mt-0 p-2.5 rounded-[18px] bg-white/[0.06] border border-white/[0.07] flex items-center gap-3 ${collapsed ? "lg:flex-col lg:m-2 lg:mt-0 lg:px-1 lg:gap-2" : ""}`}>
+        <div className="w-9 h-9 rounded-full bg-signal-500 text-ink-900 flex items-center justify-center text-xs font-semibold flex-shrink-0">
           {initials(operator?.name ?? operator?.email ?? "?")}
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-sm text-paper truncate font-medium">{operator?.name ?? operator?.email ?? "—"}</div>
-          {operator?.role && <div className="mt-0.5"><RolePill role={operator.role} /></div>}
+        <div className={`flex-1 min-w-0 ${collapsed ? "lg:hidden" : ""}`}>
+          <div className="text-sm text-white truncate font-medium">{operator?.name ?? operator?.email ?? "—"}</div>
+          {operator?.role && <div className="mt-1"><RolePill role={operator.role} onDark /></div>}
         </div>
         <button
           onClick={onLogout}
-          className="p-1.5 text-ink-400 hover:text-paper hover:bg-ink-900/60 rounded-md transition-colors"
+          className="w-11 h-11 lg:w-9 lg:h-9 flex items-center justify-center flex-shrink-0 text-ink-300 hover:text-white hover:bg-white/10 rounded-full transition-colors"
           aria-label="Log out"
           title="Log out"
         >
