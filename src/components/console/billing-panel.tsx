@@ -108,7 +108,7 @@ export function BillingPanel({ tenantId }: { tenantId: string }) {
               <Fact label="Credit limit" value={`NGN ${b.creditLimit}`} />
               <Fact
                 label="Plan"
-                value={b.plan ? `${b.plan.tier}${b.plan.overridden ? " · contract" : ""}` : "—"}
+                value={b.plan ? `${b.plan.tier}${b.plan.overridden ? " · contract" : ""}` : "Not set"}
                 hint={
                   b.plan
                     ? `NGN ${b.plan.monthly}/month · ${b.plan.includedMinutes.toLocaleString()} min · NGN ${b.plan.overagePerMinute}/min`
@@ -305,7 +305,7 @@ function Ledger({
                   </td>
                   <td className="font-mono text-xs text-fg-3">{truncId(e.sourceKey, 14)}</td>
                   <td className="text-fg-2">
-                    {e.reason ?? "—"}
+                    {e.reason ?? "None"}
                     {e.operatorId ? (
                       <div className="font-mono text-xs text-fg-3 mt-0.5">
                         by {truncId(e.operatorId)}

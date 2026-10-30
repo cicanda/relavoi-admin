@@ -278,7 +278,7 @@ export default function DlqPage() {
               ) : (
                 rows.map((e) => {
                   const isOpen = expanded.has(e.id);
-                  const errStr = e.errorMessage ?? "—";
+                  const errStr = e.errorMessage ?? "None";
                   const errTrunc =
                     errStr.length > 50 ? `${errStr.slice(0, 50)}…` : errStr;
                   return (

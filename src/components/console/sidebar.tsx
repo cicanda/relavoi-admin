@@ -250,7 +250,7 @@ export function Sidebar() {
           {initials(operator?.name ?? operator?.email ?? "?")}
         </div>
         <div className={`flex-1 min-w-0 ${collapsed ? "lg:hidden" : ""}`}>
-          <div className="text-sm text-white truncate font-medium">{operator?.name ?? operator?.email ?? "—"}</div>
+          <div className="text-sm text-white truncate font-medium">{operator?.name ?? operator?.email ?? "Not set"}</div>
           {operator?.role && <div className="mt-1"><RolePill role={operator.role} onDark /></div>}
         </div>
         <button

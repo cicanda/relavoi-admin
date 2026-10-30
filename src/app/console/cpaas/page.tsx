@@ -204,7 +204,7 @@ function ProviderCard({
         </StatBlock>
         <StatBlock label="Opened">
           <div className="text-[13px] text-fg">
-            {cb.state === "CLOSED" ? "—" : fmtRelative(cb.openedAt)}
+            {cb.state === "CLOSED" ? "None" : fmtRelative(cb.openedAt)}
           </div>
         </StatBlock>
         <StatBlock label="Failures">
@@ -218,10 +218,10 @@ function ProviderCard({
           </div>
         </StatBlock>
         <StatBlock label="Active sessions">
-          <div className="text-[13px] text-fg-3">—</div>
+          <div className="text-[13px] text-fg-3">Not set</div>
         </StatBlock>
         <StatBlock label="Calls today">
-          <div className="text-[13px] text-fg-3">—</div>
+          <div className="text-[13px] text-fg-3">Not set</div>
         </StatBlock>
       </div>
 

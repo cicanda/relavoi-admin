@@ -166,7 +166,7 @@ export default function TenantsListPage() {
                       {t.name}
                     </td>
                     <td className="text-fg-2">
-                      {t.billingEmail ?? "—"}
+                      {t.billingEmail ?? "Not set"}
                     </td>
                     <td className="whitespace-nowrap">
                       <TierPill tier={t.tier} />
@@ -177,13 +177,13 @@ export default function TenantsListPage() {
                       )}
                     </td>
                     <td className="text-fg-3 font-mono tabular-nums">
-                      —
+                      Not set
                     </td>
                     <td className="text-fg-3 font-mono tabular-nums">
-                      —
+                      Not set
                     </td>
                     <td className="text-fg-3 font-mono tabular-nums">
-                      —
+                      Not set
                     </td>
                     <td className="text-fg-2 whitespace-nowrap">
                       {fmtRelative(t.createdAt)}

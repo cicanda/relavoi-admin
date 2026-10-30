@@ -83,7 +83,7 @@ function Field({ label, value }: { label: string; value: string | null }) {
   return (
     <div className="min-w-0">
       <div className="eyebrow text-fg-3">{label}</div>
-      <div className="text-[14px] text-fg mt-1 break-words">{value ?? "—"}</div>
+      <div className="text-[14px] text-fg mt-1 break-words">{value ?? "Not set"}</div>
     </div>
   );
 }

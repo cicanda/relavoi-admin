@@ -42,9 +42,9 @@ interface PodRow {
 }
 
 const PODS: PodRow[] = [
-  { service: "api", desired: "—", ready: "—" },
-  { service: "webhook", desired: "—", ready: "—" },
-  { service: "worker", desired: "—", ready: "—" },
+  { service: "api", desired: "Not set", ready: "Not set" },
+  { service: "webhook", desired: "Not set", ready: "Not set" },
+  { service: "worker", desired: "Not set", ready: "Not set" },
 ];
 
 export default function SystemPage() {
@@ -97,7 +97,7 @@ function EnvironmentCard() {
     { label: "Backend URL", value: API_URL, mono: true },
     { label: "API version", value: "v1", mono: true },
     { label: "Console build", value: "0.1.0", mono: true },
-    { label: "Started", value: "—" },
+    { label: "Started", value: "Not set" },
   ];
 
   return (
@@ -118,7 +118,7 @@ function EnvironmentCard() {
               >
                 {row.value}
               </span>
-              {row.value !== "—" && (
+              {row.value !== "Not set" && (
                 <button
                   type="button"
                   onClick={() => copy(row.value, row.label)}
@@ -163,7 +163,7 @@ function UptimeCard({
           {status ? (
             <StatePill state={status} size="sm" />
           ) : (
-            <span className="text-[13px] text-fg-2">—</span>
+            <span className="text-[13px] text-fg-2">Not set</span>
           )}
         </div>
         <div className="pt-4 border-t border-line">
@@ -272,7 +272,7 @@ function FeatureFlagsCard() {
         ))}
       </ul>
       <p className="text-xs text-fg-3 mt-4">
-        Coming soon — feature flag management will live here.
+        Coming soon. Feature flag management will live here.
       </p>
     </div>
   );

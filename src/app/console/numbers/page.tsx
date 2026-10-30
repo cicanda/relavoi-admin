@@ -327,7 +327,7 @@ export default function NumbersPage() {
                         {n.number}
                       </td>
                       <td className="lowercase whitespace-nowrap">
-                        {n.region ?? "—"}
+                        {n.region ?? "Not set"}
                       </td>
                       <td className="font-mono uppercase">
                         {n.provider}
@@ -364,7 +364,7 @@ export default function NumbersPage() {
                               Release
                             </button>
                           ) : (
-                            <span className="text-fg-3 text-xs">—</span>
+                            <span className="text-fg-3 text-xs">None</span>
                           )}
                         </td>
                       )}

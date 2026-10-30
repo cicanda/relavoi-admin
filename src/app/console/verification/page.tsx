@@ -30,7 +30,7 @@ const REGISTRATION_LABELS: Record<string, string> = {
 };
 
 function waitingFor(submittedAt: string | null): string {
-  if (!submittedAt) return "—";
+  if (!submittedAt) return "None";
   const ms = Date.now() - new Date(submittedAt).getTime();
   const hours = Math.floor(ms / 3_600_000);
   if (hours < 1) return "under an hour";
@@ -135,10 +135,10 @@ export default function VerificationPage() {
                     </div>
                   </td>
                   <td>
-                    {r.legalName ?? "—"}
+                    {r.legalName ?? "Not set"}
                   </td>
                   <td className="whitespace-nowrap">
-                    {r.registrationNumber ?? "—"}
+                    {r.registrationNumber ?? "Not set"}
                     {r.registrationType && (
                       <span className="text-[12px] text-fg-3">
                         {" "}
@@ -150,7 +150,7 @@ export default function VerificationPage() {
                     {r.documentCount}
                   </td>
                   <td className="text-fg-2 whitespace-nowrap">
-                    {r.submittedAt ? new Date(r.submittedAt).toLocaleDateString() : "—"}
+                    {r.submittedAt ? new Date(r.submittedAt).toLocaleDateString() : "Not set"}
                   </td>
                   <td className="text-fg-2 whitespace-nowrap">
                     {waitingFor(r.submittedAt)}

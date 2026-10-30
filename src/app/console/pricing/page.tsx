@@ -306,7 +306,7 @@ export default function PricingPage() {
                               />
                             ) : (
                               <span className="text-[13px] text-fg tabular-nums">
-                                {row.overagePrice ?? "—"}
+                                {row.overagePrice ?? "Not set"}
                               </span>
                             )}
                           </td>

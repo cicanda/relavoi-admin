@@ -437,10 +437,10 @@ export default function TenantDetailPage({
         {/* Card 2 — Usage Summary */}
         <SectionCard title="Usage Summary" subtitle="Last 30 days">
           <div className="grid grid-cols-2 gap-2">
-            <UsageStat label="Active sessions" value="—" />
-            <UsageStat label="Calls (30d)" value="—" />
-            <UsageStat label="SMS (30d)" value="—" />
-            <UsageStat label="Numbers in use" value="—" />
+            <UsageStat label="Active sessions" value="Not set" />
+            <UsageStat label="Calls (30d)" value="Not set" />
+            <UsageStat label="SMS (30d)" value="Not set" />
+            <UsageStat label="Numbers in use" value="Not set" />
           </div>
           <p className="mt-4 text-xs text-fg-3">
             Usage details endpoint coming soon.
@@ -652,8 +652,8 @@ function OnboardingFields({
 }) {
   const get = (key: string): string => {
     const v = metadata?.[key];
-    if (v == null || v === "") return "—";
-    if (Array.isArray(v)) return v.length ? v.join(", ") : "—";
+    if (v == null || v === "") return "Not set";
+    if (Array.isArray(v)) return v.length ? v.join(", ") : "None";
     if (typeof v === "object") return JSON.stringify(v);
     return String(v);
   };
@@ -749,7 +749,7 @@ function ComplianceRows({
               <div className="text-[13px] text-fg font-medium">{doc.label}</div>
             </div>
             <div className="text-[12px] text-fg-3 font-mono">
-              {entry ? fmtAbsolute(entry.createdAt) : "—"}
+              {entry ? fmtAbsolute(entry.createdAt) : "Not set"}
             </div>
           </li>
         );

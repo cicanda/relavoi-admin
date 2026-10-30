@@ -179,7 +179,7 @@ export default function OperatorsPage() {
                     <tr key={op.id}>
                       <Td className="font-medium text-[14px] tracking-[-0.01em]">
                         <div className="flex items-center gap-2 whitespace-nowrap">
-                          {op.name || "—"}
+                          {op.name || "Not set"}
                           {isSelf && (
                             <span className="badge badge-sm font-normal bg-ink-900 text-white">
                               you
@@ -371,7 +371,7 @@ function AddOperatorModal({
             password.length === 0
               ? "≥12 chars"
               : password.length < 12
-                ? `${password.length}/12 chars — too short`
+                ? `${password.length}/12 chars, too short`
                 : "✓ length looks ok"
           }
         >

@@ -99,7 +99,7 @@ export default function OverviewPage() {
           />
           <StatCard
             label="Calls Today"
-            value="—"
+            value="Not set"
             accent="sky"
             icon={PhoneCall}
             loading={false}
@@ -249,7 +249,7 @@ export default function OverviewPage() {
                       </span>
                       <div className="min-w-0">
                         <div className="text-[14px] text-fg font-medium truncate tracking-[-0.01em]">{t.name}</div>
-                        <div className="text-[12px] text-fg-3 mt-0.5">active sessions: —</div>
+                        <div className="text-[12px] text-fg-3 mt-0.5">active sessions: Not set</div>
                       </div>
                     </div>
                     <TierPill tier={t.tier} />

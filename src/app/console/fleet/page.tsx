@@ -24,7 +24,7 @@ export default function FleetPage() {
     staleTime: 30_000,
   });
 
-  const [platform, setPlatform] = useState<string>("—");
+  const [platform, setPlatform] = useState<string>("Not set");
   useEffect(() => {
     if (typeof navigator !== "undefined" && navigator.platform) {
       setPlatform(navigator.platform);
@@ -45,45 +45,45 @@ export default function FleetPage() {
         <FleetCard title="API service" icon={Server} loading={isLoading}>
           <Row label="Replicas" value="2" />
           <RowPill label="Status" state={serviceState} />
-          <Row label="Last deploy" value="—" />
+          <Row label="Last deploy" value="Not set" />
         </FleetCard>
 
         <FleetCard title="Webhook service" icon={Webhook} loading={isLoading}>
           <Row label="Replicas" value="3" hint="critical path" />
           <RowPill label="Status" state={serviceState} />
-          <Row label="Last deploy" value="—" />
+          <Row label="Last deploy" value="Not set" />
         </FleetCard>
 
         <FleetCard title="Worker service" icon={Cpu} loading={isLoading}>
           <Row label="Replicas" value="1" />
           <RowPill label="Status" state={serviceState} />
-          <Row label="Background jobs" value="—" />
+          <Row label="Background jobs" value="Not set" />
         </FleetCard>
 
         <FleetCard title="PostgreSQL" icon={Database} loading={isLoading}>
           <RowPill label="Status" state={health.checks?.postgres ?? "down"} />
-          <Row label="Connections" value="—" />
-          <Row label="Utilization" value="—" />
+          <Row label="Connections" value="Not set" />
+          <Row label="Utilization" value="Not set" />
         </FleetCard>
 
         <FleetCard title="Redis" icon={Activity} loading={isLoading}>
           <RowPill label="Status" state={health.checks?.redis ?? "down"} />
-          <Row label="Memory" value="—" />
-          <Row label="Clients" value="—" />
-          <Row label="Uptime" value="—" />
+          <Row label="Memory" value="Not set" />
+          <Row label="Clients" value="Not set" />
+          <Row label="Uptime" value="Not set" />
         </FleetCard>
 
         <FleetCard title="Runtime" icon={Cpu}>
           <Row label="Node" value="Node.js" />
-          <Row label="Memory RSS" value="—" />
+          <Row label="Memory RSS" value="Not set" />
           <Row label="Platform" value={platform} />
         </FleetCard>
 
         <div className="opacity-60 [&>.card]:h-full">
           <FleetCard title="Kubernetes" icon={Layers}>
-            <Row label="Replicas across pods" value="—" />
+            <Row label="Replicas across pods" value="Not set" />
             <div className="text-xs text-fg-3 pt-3">
-              Coming soon — pod-level introspection will appear here once the operator API exposes
+              Coming soon. Pod-level introspection will appear here once the operator API exposes
               it.
             </div>
           </FleetCard>
