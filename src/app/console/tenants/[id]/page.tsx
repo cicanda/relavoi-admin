@@ -394,11 +394,16 @@ export default function TenantDetailPage({
 
             {/* Toggles */}
             <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {/* Recording is not available on the platform yet, so this is
+                  permanently off rather than conditionally editable. The API
+                  refuses recordingEnabled true on both the session and the
+                  tenant with 422 feature-not-available, and no <Dial> we send
+                  carries a record attribute. */}
               <Toggle
-                label="Recording enabled"
-                value={form.recordingEnabled}
-                onChange={(v) => setForm({ ...form, recordingEnabled: v })}
-                disabled={!canEdit}
+                label="Recording (coming soon)"
+                value={false}
+                onChange={() => {}}
+                disabled
               />
               <Toggle
                 label="Push enabled"
