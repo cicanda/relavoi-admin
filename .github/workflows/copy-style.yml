@@ -1,0 +1,26 @@
+name: Copy style
+
+# Enforces the house copy rules on text an operator can read.
+# The check is a plain Node script with no dependencies, so you can run the
+# same thing locally before pushing:
+#
+#   npm run check:copy
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  em-dashes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: No em dashes in user-facing copy
+        run: node check-em-dashes.js
