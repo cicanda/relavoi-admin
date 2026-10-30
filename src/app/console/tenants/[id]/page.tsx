@@ -19,6 +19,7 @@ import { Skeleton, SkeletonRow } from "@/components/skeleton";
 import { useToast } from "@/components/toast";
 import { ConfirmDialog } from "@/components/console/confirm-dialog";
 import { KybPanel } from "@/components/console/kyb-panel";
+import { BillingPanel } from "@/components/console/billing-panel";
 import {
   getTenant,
   listAdminSessions,
@@ -451,6 +452,11 @@ export default function TenantDetailPage({
           <ComplianceRows audit={auditQ.data?.data ?? []} loading={auditQ.isLoading} />
         </SectionCard>
       </div>
+
+      {/* Billing: the wallet, its ledger and every control that moves money.
+          Full width, below the configuration grid, because the ledger is a
+          table and the forms each need room for a reason field. */}
+      <BillingPanel tenantId={id} />
 
       {/* Recent Sessions */}
       <section className="card overflow-hidden mt-[var(--gap)]">

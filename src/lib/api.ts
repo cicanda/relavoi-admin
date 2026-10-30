@@ -16,6 +16,10 @@ import type {
   SystemHealth,
   OperatorRole,
   Tier,
+  TenantBilling,
+  AdminLedgerEntry,
+  ContractTerms,
+  ContractTermsView,
 } from "./types";
 
 // NEXT_PUBLIC_ADMIN_API_URL points at the backend's /v1/admin namespace.
@@ -420,4 +424,91 @@ export async function rejectTenantKyb(tenantId: string, reason: string) {
     rejectionReason: string;
   }>(`/tenants/${tenantId}/kyb/reject`, { reason });
   return data;
+}
+
+// ─── Tenant billing ───────────────────────────────────────────────────────────
+
+export async function getTenantBilling(id: string) {
+  const { data } = await adminApi.get<TenantBilling>(`/tenants/${id}/billing`);
+  return data;
+}
+
+export async function getTenantLedger(id: string, limit = 50, before?: string) {
+  const { data } = await adminApi.get<{ entries: AdminLedgerEntry[]; nextBefore: string | null }>(
+    `/tenants/${id}/billing/ledger`,
+    { params: { limit, ...(before ? { before } : {}) } },
+  );
+  return data;
+}
+
+/**
+ * Money in by hand: a bank transfer that actually arrived, or a refund of our
+ * own mistake. `sourceKey` is the idempotency key, so the same bank reference
+ * cannot be credited twice however many times the form is submitted.
+ */
+export async function creditTenant(
+  id: string,
+  body: { amountNaira: number; reason: string; kind: "ADJUSTMENT" | "REFUND"; sourceKey: string },
+) {
+  const { data } = await adminApi.post(`/tenants/${id}/billing/credit`, body);
+  return data as { entryId: string; balance: string };
+}
+
+export async function debitTenant(
+  id: string,
+  body: { amountNaira: number; reason: string; sourceKey: string },
+) {
+  const { data } = await adminApi.post(`/tenants/${id}/billing/debit`, body);
+  return data as { entryId: string; balance: string };
+}
+
+/** Undo an entry by posting its opposite. Nothing is ever edited or deleted. */
+export async function reverseLedgerEntry(id: string, body: { entryId: string; reason: string }) {
+  const { data } = await adminApi.post(`/tenants/${id}/billing/reverse`, body);
+  return data as { entryId: string; balance: string };
+}
+
+export async function setBillingBypass(id: string, body: { hours: number; reason: string }) {
+  const { data } = await adminApi.post(`/tenants/${id}/billing/bypass`, body);
+  return data as { tenantId: string; bypassUntil: string };
+}
+
+export async function clearBillingBypass(id: string, reason: string) {
+  const { data } = await adminApi.delete(`/tenants/${id}/billing/bypass`, { data: { reason } });
+  return data as { tenantId: string };
+}
+
+export async function setCreditLimit(id: string, body: { limitNaira: number; reason: string }) {
+  const { data } = await adminApi.put(`/tenants/${id}/billing/credit-limit`, body);
+  return data as { tenantId: string; creditLimit: string };
+}
+
+export async function getContractTerms(id: string) {
+  const { data } = await adminApi.get<ContractTermsView>(`/tenants/${id}/billing/terms`);
+  return data;
+}
+
+export async function putContractTerms(id: string, body: ContractTerms & { reason: string }) {
+  const { data } = await adminApi.put(`/tenants/${id}/billing/terms`, body);
+  return data as ContractTermsView;
+}
+
+export async function endContractTerms(id: string, reason: string) {
+  const { data } = await adminApi.delete(`/tenants/${id}/billing/terms`, { data: { reason } });
+  return data as { tenantId: string };
+}
+
+export async function setTenantInternal(id: string, body: { internal: boolean; reason: string }) {
+  const { data } = await adminApi.put(`/tenants/${id}/internal`, body);
+  return data as { tenantId: string; internal: boolean };
+}
+
+/**
+ * Which payment key this workspace uses. 'test' is refused on any workspace
+ * that is not flagged internal, by this route and by a database constraint
+ * underneath it.
+ */
+export async function setPaymentsMode(id: string, body: { mode: "live" | "test"; reason: string }) {
+  const { data } = await adminApi.put(`/tenants/${id}/billing/payments-mode`, body);
+  return data as { tenantId: string; paymentsMode: "live" | "test"; internal: boolean };
 }

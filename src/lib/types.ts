@@ -144,3 +144,108 @@ export interface SystemHealth {
   dlqDepth?: number;
   timestamp?: string;
 }
+
+// ─── Tenant billing (operator view) ───────────────────────────────────────────
+
+/**
+ * Amounts here are naira decimal strings ("12500.00"), the shape the operator
+ * routes already speak. The console prints them and never computes with them:
+ * the ledger is the record of what was charged, and a figure recomputed in a
+ * browser will eventually disagree with it.
+ */
+export interface TenantBilling {
+  tenantId: string;
+  name: string;
+  tier: Tier;
+  mode: "sandbox" | "live";
+  balance: string;
+  creditLimit: string;
+  blocked: boolean;
+  bypassUntil: string | null;
+  graceUntil: string | null;
+  plan: {
+    tier: Tier;
+    monthly: string;
+    includedMinutes: number;
+    overagePerMinute: string;
+    /** True when a contract is laying terms over the tier's plan. */
+    overridden: boolean;
+  } | null;
+  period: {
+    id: string;
+    start: string;
+    end: string;
+    includedMinutesUsed: number;
+    overageMinutes: number;
+  } | null;
+}
+
+export type AdminLedgerType =
+  | "TOPUP"
+  | "FEE"
+  | "SUBSCRIPTION"
+  | "USAGE"
+  | "ADJUSTMENT"
+  | "REFUND"
+  | "REVERSAL";
+
+export interface AdminLedgerEntry {
+  id: string;
+  type: AdminLedgerType;
+  amount: string;
+  balanceAfter: string;
+  sourceKey: string;
+  billingPeriodId: string | null;
+  operatorId: string | null;
+  reason: string | null;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+}
+
+/** Every term is optional; an omitted one keeps following the plan. */
+export interface ContractTerms {
+  monthlyNaira?: number;
+  includedMinutes?: number;
+  overageNairaPerMinute?: number;
+  maxConcurrentPerPerson?: number;
+  maxConcurrentSessions?: number;
+  maxApiReqPerMin?: number;
+  effectiveFrom?: string;
+}
+
+export interface ContractTermsView {
+  tenantId: string;
+  tier: Tier;
+  /** The terms that actually apply: the tier's plan with any contract over it. */
+  effective: {
+    monthly: string;
+    includedMinutes: number;
+    overagePerMinute: string;
+    maxConcurrentPerPerson: number;
+    maxConcurrentSessions: number;
+    maxApiReqPerMin: number;
+  } | null;
+  overridden: boolean;
+  /** The open contract window. Null in any field means "follow the plan". */
+  current: {
+    id: string;
+    monthly: string | null;
+    includedMinutes: number | null;
+    overagePerMinute: string | null;
+    maxConcurrentPerPerson: number | null;
+    maxConcurrentSessions: number | null;
+    maxApiReqPerMin: number | null;
+    effectiveFrom: string;
+    effectiveUntil: string | null;
+    reason: string;
+    operatorId: string | null;
+  } | null;
+  history: Array<{
+    id: string;
+    effectiveFrom: string;
+    effectiveUntil: string | null;
+    reason: string;
+    operatorId: string | null;
+    createdAt: string;
+  }>;
+}
