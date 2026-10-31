@@ -399,6 +399,9 @@ export async function getTenantKyb(tenantId: string) {
  * rather than alongside the list: issuing a URL is an audited access to someone
  * else's identity document, so it happens only when an operator asks for it.
  */
+// One document per request, by id: the backend never serves the storage key,
+// so there is nothing here to cache or share beyond the short-lived URL it
+// hands back.
 export async function getKybDocumentUrl(documentId: string) {
   const { data } = await adminApi.get<{
     url: string;
