@@ -71,6 +71,16 @@ const REPORT_ONLY_POLICY = [
  * here that needs to know where it came from.
  */
 const SECURITY_HEADERS = [
+  // Vercel sends HSTS of its own, without includeSubDomains, and an explicit
+  // header here replaces it. Two years, and includeSubDomains, which was held
+  // back until every name under relavoi.com was checked: on 2026-11-01 the
+  // apex, api, staging-api, app, admin and docs all served valid Let's Encrypt
+  // certificates, and mail.relavoi.com has no web server to strand. No
+  // preload: that is a submission to a browser list that is slow to undo.
+  {
+    key: "Strict-Transport-Security",
+    value: "max-age=63072000; includeSubDomains",
+  },
   { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
   { key: "Content-Security-Policy-Report-Only", value: REPORT_ONLY_POLICY },
   { key: "X-Frame-Options", value: "DENY" },
