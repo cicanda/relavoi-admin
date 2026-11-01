@@ -58,13 +58,77 @@ adminApi.interceptors.response.use(
 export interface AdminLoginResponse {
   accessToken: string;
   operator: Operator;
+  mfa?: {
+    enrolled: boolean;
+    /** The console sends the operator to the enrolment screen on this. */
+    enrolmentRequired: boolean;
+    usedRecoveryCode: boolean;
+    recoveryCodesRemaining: number;
+  };
 }
 
-export async function adminLogin(email: string, password: string) {
+/**
+ * Sign in. `totpCode` is the six digit code from an authenticator, or a
+ * recovery code.
+ *
+ * An operator who has not finished enrolling signs in without one and gets a
+ * token that can do nothing but enrol. Issuing no token at all would have
+ * locked everyone out of the console on the deploy that added the second
+ * factor, including whoever has to enrol first.
+ */
+export async function adminLogin(email: string, password: string, totpCode?: string) {
   const { data } = await adminApi.post<AdminLoginResponse>("/auth/login", {
     email,
     password,
+    ...(totpCode ? { totpCode } : {}),
   });
+  return data;
+}
+
+// ─── Second factor ────────────────────────────────────────────────────────────
+
+export interface MfaStatus {
+  enrolled: boolean;
+  enrolledAt: string | null;
+  enrolmentStarted: boolean;
+  recoveryCodesRemaining: number;
+  lockoutThreshold: number;
+}
+
+export async function getMfaStatus() {
+  const { data } = await adminApi.get<MfaStatus>("/auth/mfa");
+  return data;
+}
+
+export interface TotpEnrolmentOffer {
+  otpauthUri: string;
+  /** base32, for typing into an app by hand. */
+  secret: string;
+  digits: number;
+  periodSeconds: number;
+  algorithm: string;
+}
+
+export async function startTotpEnrolment() {
+  const { data } = await adminApi.post<TotpEnrolmentOffer>("/auth/totp/enroll");
+  return data;
+}
+
+export interface TotpConfirmResult {
+  enrolled: boolean;
+  /** Shown once. They are stored hashed and cannot be shown again. */
+  recoveryCodes: string[];
+}
+
+export async function confirmTotpEnrolment(code: string) {
+  const { data } = await adminApi.post<TotpConfirmResult>("/auth/totp/confirm", { code });
+  return data;
+}
+
+export async function resetOperatorMfa(operatorId: string) {
+  const { data } = await adminApi.post<{ id: string; enrolled: boolean }>(
+    `/operators/${operatorId}/mfa/reset`,
+  );
   return data;
 }
 

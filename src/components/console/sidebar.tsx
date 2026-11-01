@@ -72,6 +72,7 @@ const NAV: NavGroup[] = [
     label: "Account",
     items: [
       { label: "Operators", href: "/console/operators", icon: Users },
+      { label: "Security", href: "/console/security", icon: ShieldCheck },
       { label: "System", href: "/console/system", icon: Cpu },
     ],
   },

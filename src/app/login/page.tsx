@@ -17,6 +17,10 @@ export default function OperatorLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // Revealed only once the server has said it wants one, so an operator who
+  // has not enrolled never sees a field they cannot fill in.
+  const [needsCode, setNeedsCode] = useState(false);
+  const [code, setCode] = useState("");
 
   // If a token is already in the store, bounce straight to the console.
   useEffect(() => {
@@ -29,15 +33,34 @@ export default function OperatorLoginPage() {
     setError(null);
     setSubmitting(true);
     try {
-      const res = await adminLogin(email.trim(), password);
+      const res = await adminLogin(email.trim(), password, code.trim() || undefined);
       setSession({ token: res.accessToken, operator: res.operator });
-      router.push("/console/overview");
+      // A token issued before enrolment is finished can do nothing else, so
+      // there is no point sending them to a console that would refuse them.
+      router.push(res.mfa?.enrolmentRequired ? "/console/security" : "/console/overview");
     } catch (err: unknown) {
       let msg = "Sign in failed. Check your credentials and try again.";
       if (axios.isAxiosError(err)) {
         const status = err.response?.status;
-        const data = err.response?.data as { message?: string; detail?: string } | undefined;
-        if (status === 401 || status === 403) {
+        const data = err.response?.data as
+          | { message?: string; detail?: string; type?: string; retryAfterSeconds?: number }
+          | undefined;
+        const slug = data?.type ?? "";
+
+        if (slug.includes("totp-required")) {
+          // First time round the password was right and the code was missing.
+          // Reveal the field and say so, rather than reporting a failure.
+          setNeedsCode(true);
+          msg = "Enter the six digit code from your authenticator.";
+        } else if (slug.includes("totp-invalid")) {
+          setNeedsCode(true);
+          msg = "That code is not valid. Wait for the next one and try again.";
+          setCode("");
+        } else if (slug.includes("account-locked")) {
+          const seconds = data?.retryAfterSeconds ?? 0;
+          const minutes = Math.ceil(seconds / 60);
+          msg = `Too many failed attempts. This account is locked for about ${minutes} minute${minutes === 1 ? "" : "s"}.`;
+        } else if (status === 401 || status === 403) {
           msg = data?.message ?? data?.detail ?? "Invalid email or password.";
         } else if (status === 429) {
           msg = "Too many attempts. Please wait a moment and try again.";
@@ -128,9 +151,34 @@ export default function OperatorLoginPage() {
             </div>
           </div>
 
+          {needsCode && (
+            <div>
+              <label htmlFor="totp" className="block eyebrow text-ink-400 mb-2">
+                Authenticator code
+              </label>
+              <input
+                id="totp"
+                name="totp"
+                // One-time-code tells a phone keyboard to offer the code it has
+                // just seen, and inputMode numeric keeps it to a keypad.
+                autoComplete="one-time-code"
+                inputMode="numeric"
+                autoFocus
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                disabled={submitting}
+                className={`${inputCls} px-4 tracking-[0.3em] font-mono`}
+                placeholder="000000"
+              />
+              <p className="text-[12px] text-ink-400 mt-2">
+                Or enter one of your recovery codes.
+              </p>
+            </div>
+          )}
+
           <button
             type="submit"
-            disabled={submitting || !email || !password}
+            disabled={submitting || !email || !password || (needsCode && !code.trim())}
             className="btn btn-accent w-full min-h-12 text-sm"
           >
             {submitting ? "Signing in…" : "Sign in"}
