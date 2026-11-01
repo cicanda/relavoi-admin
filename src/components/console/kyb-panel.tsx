@@ -34,6 +34,20 @@ const REGISTRATION_LABELS: Record<string, string> = {
 /** Minimum the server enforces on a rejection reason. */
 const MIN_REASON = 10;
 
+/**
+ * A YYYY-MM-DD from the server, rendered the way the rest of this console
+ * renders dates.
+ *
+ * Parsed from its parts rather than through `new Date(ymd)`, which reads a
+ * bare date as UTC midnight and so renders as the previous day for any
+ * reviewer in a timezone behind Greenwich.
+ */
+function fmtIssued(ymd: string): string {
+  const [y, m, d] = ymd.split("-").map(Number);
+  if (!y || !m || !d) return ymd;
+  return new Date(y, m - 1, d).toLocaleDateString();
+}
+
 function fmtBytes(n: number): string {
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(0)} KB`;
@@ -115,9 +129,20 @@ function DocumentRow({ doc }: { doc: KybDocument }) {
       <div className="min-w-0 flex-1">
         <div className="text-[14px] text-fg break-words">{KIND_LABELS[doc.kind]}</div>
         <div className="text-[12px] text-fg-3 break-all mt-0.5">
-          {doc.filename} · {fmtBytes(doc.sizeBytes)} ·{" "}
+          {doc.filename} · {fmtBytes(doc.sizeBytes)} · uploaded{" "}
           {new Date(doc.uploadedAt).toLocaleDateString()}
+          {/* Labelled, so it is not read as a second upload date. A reviewer
+              should be able to check the three month rule from this line
+              without opening the file. */}
+          {doc.issuedOn && <> · issued {fmtIssued(doc.issuedOn)}</>}
         </div>
+        {doc.expired && (
+          <div className="text-[12px] text-amber-700 mt-0.5">
+            {doc.issuedOn
+              ? "Out of date: issued more than three months ago."
+              : "No issue date recorded, so it cannot be shown to be recent."}
+          </div>
+        )}
         <div className="text-[10px] font-mono text-fg-3 break-all mt-0.5">
           sha256 {doc.sha256.slice(0, 16)}…
         </div>
@@ -224,18 +249,26 @@ export function KybPanel({ tenantId, canDecide }: { tenantId: string; canDecide:
           </div>
         )}
 
-        {(k.missingDetails.length > 0 || k.missingKinds.length > 0) && k.status !== "APPROVED" && (
-          <div className="callout border-amber-500/30 bg-amber-500/10 text-amber-900 space-y-0.5">
-            {k.missingDetails.length > 0 && (
-              <div>Missing details: {k.missingDetails.join(", ")}</div>
-            )}
-            {k.missingKinds.length > 0 && (
-              <div>
-                Missing documents: {k.missingKinds.map((x) => KIND_LABELS[x]).join(", ")}
-              </div>
-            )}
-          </div>
-        )}
+        {(k.missingDetails.length > 0 ||
+          k.missingKinds.length > 0 ||
+          (k.expiredDocuments ?? []).length > 0) &&
+          k.status !== "APPROVED" && (
+            <div className="callout border-amber-500/30 bg-amber-500/10 text-amber-900 space-y-0.5">
+              {k.missingDetails.length > 0 && (
+                <div>Missing details: {k.missingDetails.join(", ")}</div>
+              )}
+              {k.missingKinds.length > 0 && (
+                <div>
+                  Missing documents: {k.missingKinds.map((x) => KIND_LABELS[x]).join(", ")}
+                </div>
+              )}
+              {/* In words as well as on the rows. A reviewer working a queue
+                  should not have to notice a date. */}
+              {(k.expiredDocuments ?? []).map((e) => (
+                <div key={e.id}>Out of date: {e.reason}.</div>
+              ))}
+            </div>
+          )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-x-5 gap-y-5">
           <Field label="Registered name" value={d.legalName} />

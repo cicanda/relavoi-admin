@@ -342,6 +342,22 @@ export interface KybDocument {
   sizeBytes: number;
   sha256: string;
   uploadedAt: string;
+  // The date printed on the document, YYYY-MM-DD, as distinct from the day it
+  // was uploaded. Null for a kind that carries no date, and for anything filed
+  // before the backend recorded one.
+  issuedOn?: string | null;
+  issueDateRequired?: boolean;
+  // Computed by the backend, so this console and the tenant dashboard cannot
+  // disagree about whether a document still counts.
+  expired?: boolean;
+}
+
+/** A filed document that is too old, or too undated, to count. */
+export interface KybExpiredDocument {
+  id: string;
+  kind: KybDocumentKind;
+  issuedOn: string | null;
+  reason: string;
 }
 
 export interface KybQueueRow {
@@ -376,6 +392,10 @@ export interface KybTenantDetail {
   documents: KybDocument[];
   missingKinds: KybDocumentKind[];
   missingDetails: string[];
+  // Documents that are filed but out of date. Optional: an admin deploy can
+  // briefly run against a backend that predates the field.
+  expiredDocuments?: KybExpiredDocument[];
+  proofOfAddressMaxAgeMonths?: number;
   submittedAt: string | null;
   reviewedAt: string | null;
   reviewedBy: { id: string; email: string } | null;
