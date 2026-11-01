@@ -31,7 +31,7 @@ test.describe("Relavoi operator console — E2E", () => {
     await page.waitForURL("**/console/overview", { timeout: 10_000 });
 
     // Sidebar rendered with the operator name + ROOT badge
-    await expect(page.getByText(/Olu Kalubridge|admin@relavoi/i).first()).toBeVisible();
+    await expect(page.getByText(/Dev Operator|admin@relavoi/i).first()).toBeVisible();
     await expect(page.getByText(/ROOT/).first()).toBeVisible();
   });
 

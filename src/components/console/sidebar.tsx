@@ -160,6 +160,17 @@ export function Sidebar() {
         />
       )}
 
+      {/*
+        Holds the width the fixed panel no longer occupies in the flex row,
+        plus the 0.75rem gutter its old `lg:m-3 lg:mr-0` margin provided.
+      */}
+      <div
+        aria-hidden="true"
+        className={`hidden lg:block lg:flex-shrink-0 ${
+          collapsed ? "lg:w-[5.25rem]" : "lg:w-[16.75rem]"
+        }`}
+      />
+
       <aside
         id={NAV_ID}
         aria-label="Console navigation"
@@ -172,7 +183,12 @@ export function Sidebar() {
         className={[
           "sidebar-panel panel-dark",
           "fixed top-2 bottom-2 left-2 z-50 w-[min(18rem,calc(100vw-1rem))] flex flex-col rounded-[24px] shadow-[var(--shadow-pop)] overflow-hidden",
-          "lg:sticky lg:top-3 lg:bottom-auto lg:left-auto lg:z-auto lg:m-3 lg:mr-0 lg:h-[calc(100vh-1.5rem)] lg:self-start lg:flex-shrink-0 lg:shadow-none",
+          // Fixed from lg too, pinned top and bottom at the same 0.75rem inset
+          // the floating card already had. It was `lg:sticky lg:self-start`
+          // with an explicit 100vh-minus-margins height; fixed with both edges
+          // pinned is the same picture without the height arithmetic, and it
+          // cannot be pushed by the flex row it no longer sits in.
+          "lg:top-3 lg:bottom-3 lg:left-3 lg:z-auto lg:shadow-none",
           collapsed ? "lg:w-[4.5rem]" : "lg:w-64",
         ].join(" ")}
       >
