@@ -15,6 +15,7 @@ import {
   Hash,
   Activity,
   Radio,
+  Webhook,
   Server,
   AlertTriangle,
   Tags,
@@ -59,6 +60,7 @@ const NAV: NavGroup[] = [
       { label: "CPaaS", href: "/console/cpaas", icon: Radio },
       { label: "Fleet", href: "/console/fleet", icon: Server },
       { label: "DLQ & Retries", href: "/console/dlq", icon: AlertTriangle, badge: "dlq", badgeDanger: true },
+      { label: "Webhook Sink", href: "/console/webhooks", icon: Webhook },
     ],
   },
   {

@@ -270,6 +270,39 @@ export async function listDlq(params: {
   return data;
 }
 
+/**
+ * What our own webhook sink received.
+ *
+ * The internal workspace's webhook pointed at a path on the marketing site for
+ * as long as it has existed: 19 deliveries, all 404, none ever accepted. This
+ * is the other end of the loop, so a delivery can be seen leaving the platform
+ * and arriving signed.
+ */
+export interface InternalWebhookDelivery {
+  id: string;
+  event: string | null;
+  deliveryId: string | null;
+  signatureValid: boolean;
+  signatureDetail: string | null;
+  workspaceName: string | null;
+  tenantId: string | null;
+  payload: Record<string, unknown>;
+  sentAt: string | null;
+  receivedAt: string;
+  latencyMs: number | null;
+}
+
+export async function listInternalWebhooks(limit = 50) {
+  const { data } = await adminApi.get<{
+    data: InternalWebhookDelivery[];
+    total: number;
+    verified: number;
+    retentionDays: number;
+    configured: boolean;
+  }>("/webhooks/internal", { params: { limit } });
+  return data;
+}
+
 export async function retryDlq(ids?: string[]) {
   // Backend responds { retrying: number }.
   const { data } = await adminApi.post<{ retrying: number }>("/dlq/retry", { ids });
