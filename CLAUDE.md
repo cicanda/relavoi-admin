@@ -53,14 +53,18 @@ commits intact under their name and keeps the review trail readable. Use
 "Create a merge commit" in the GitHub UI, or `git merge --no-ff`.
 
 **Check the PR builds locally before merging**, and report anything that fails
-rather than merging over it. There is no lint script in this repository, so the
-checks are:
+rather than merging over it. The checks are:
 
 ```
 npm run check:copy     # the em dash guard
+npm run lint           # ESLint; errors fail, warnings do not
 npx tsc --noEmit       # typecheck
 npm run build
 ```
+
+`npm run lint` reports warnings and exits 0. It is clean of errors as of
+2 November 2026, with 18 warnings, four of which are the react-hooks debt
+listed in `docs/backlog.md`.
 
 **Read an open PR and its comments as part of the fetch-before-work rule**, not
 only when about to merge it. If it touches something we have changed, say so

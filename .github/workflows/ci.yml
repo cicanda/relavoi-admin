@@ -20,6 +20,11 @@ jobs:
       - name: Install
         run: npm ci
 
+      - name: Lint
+        # No continue-on-error anywhere in this file. Errors fail the build;
+        # warnings are reported and do not. See eslint.config.mjs.
+        run: npm run lint
+
       - name: Type-check
         run: npx tsc --noEmit
 
