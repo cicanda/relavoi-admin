@@ -144,8 +144,26 @@ export async function listTenants(params: {
   return data;
 }
 
+/**
+ * The 30 day usage summary the endpoint has always returned under
+ * `usageLast30d`, typed so the review page can read it. It was declared as
+ * `usage?: unknown` and the page printed "Not set" four times beside the words
+ * "Usage details endpoint coming soon".
+ */
+export interface TenantUsageLast30d {
+  periodStart: string;
+  periodEnd: string;
+  metrics: Partial<Record<
+    "session_created" | "call_minute" | "sms_sent" | "sms_received" | "recording_minute" | "number_rental",
+    number
+  >>;
+  totalEvents: number;
+}
+
 export async function getTenant(id: string) {
-  const { data } = await adminApi.get<Tenant & { usage?: unknown }>(`/tenants/${id}`);
+  const { data } = await adminApi.get<
+    Tenant & { usageLast30d?: TenantUsageLast30d | null; userCount?: number }
+  >(`/tenants/${id}`);
   return data;
 }
 
@@ -452,6 +470,7 @@ export interface KybTenantDetail {
     contactName: string | null;
     contactPhone: string | null;
     website: string | null;
+    socialLinks: string[];
   };
   documents: KybDocument[];
   missingKinds: KybDocumentKind[];

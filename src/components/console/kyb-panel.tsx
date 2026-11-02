@@ -102,6 +102,44 @@ function Field({ label, value }: { label: string; value: string | null }) {
   );
 }
 
+/**
+ * A link the applicant gave us. The reviewer is meant to open it and look.
+ *
+ * `rel="noreferrer"` so an applicant's server is not told the console URL that
+ * sent the visit, and `target="_blank"` so a review in progress is never
+ * navigated away from. Anything not plainly https renders as text: links
+ * saved before https was required are shown, not made clickable.
+ */
+function LinkList({ label, urls }: { label: string; urls: string[] }) {
+  return (
+    <div className="min-w-0">
+      <div className="eyebrow text-fg-3">{label}</div>
+      {urls.length === 0 ? (
+        <div className="text-[14px] text-fg mt-1">Not set</div>
+      ) : (
+        <ul className="mt-1 space-y-0.5">
+          {urls.map((u) => (
+            <li key={u} className="text-[14px] break-all">
+              {/^https:\/\//i.test(u) ? (
+                <a
+                  href={u}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-signal-700 underline hover:no-underline"
+                >
+                  {u}
+                </a>
+              ) : (
+                <span className="text-fg">{u}</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 /** One document, opened through a presigned URL fetched on click. */
 function DocumentRow({ doc }: { doc: KybDocument }) {
   const toast = useToast();
@@ -289,8 +327,13 @@ export function KybPanel({ tenantId, canDecide }: { tenantId: string; canDecide:
           />
           <Field label="Contact name" value={d.contactName} />
           <Field label="Contact phone" value={d.contactPhone} />
-          <Field label="Website" value={d.website} />
+          <LinkList label="Website" urls={d.website ? [d.website] : []} />
           <Field label="Workspace mode" value={k.mode} />
+          {/* Spans the grid: a business may list several, and a wrapped column
+              of long profile URLs is unreadable. */}
+          <div className="sm:col-span-2 xl:col-span-4">
+            <LinkList label="Social media profiles" urls={d.socialLinks ?? []} />
+          </div>
         </div>
 
         <div>

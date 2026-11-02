@@ -23,29 +23,17 @@ const API_URL =
   process.env.NEXT_PUBLIC_ADMIN_API_URL ?? "http://localhost:8080/v1/admin";
 const METRICS_URL = `${API_URL.replace(/\/v1\/admin\/?$/, "")}/metrics`;
 
-interface FlagRow {
-  name: string;
-  state: "DEFAULT" | "DISABLED" | "ENABLED";
-}
-
-const FLAGS: FlagRow[] = [
-  { name: "consent_audio_required", state: "DEFAULT" },
-  { name: "twilio_failover_pool", state: "DISABLED" },
-  { name: "sms_auto_reply", state: "ENABLED" },
-  { name: "circuit_breaker_v2", state: "DEFAULT" },
-];
-
-interface PodRow {
-  service: string;
-  desired: string;
-  ready: string;
-}
-
-const PODS: PodRow[] = [
-  { service: "api", desired: "Not set", ready: "Not set" },
-  { service: "webhook", desired: "Not set", ready: "Not set" },
-  { service: "worker", desired: "Not set", ready: "Not set" },
-];
+/*
+ * There was a FLAGS array here listing four feature flags with states, and a
+ * PODS array listing three Kubernetes services. Both were invented. No flag
+ * system exists, so "sms_auto_reply ENABLED" told an operator something about
+ * this platform that was not true, and nothing is orchestrated by Kubernetes,
+ * so there are no pods to be desired or ready. Fabricated state on an
+ * operator console is worse than a blank card: it is read and believed.
+ *
+ * The cards stay, because what they ask about is worth asking, and now say
+ * what is actually the case.
+ */
 
 export default function SystemPage() {
   const healthQ = useQuery({
@@ -260,39 +248,16 @@ function FeatureFlagsCard() {
         <span className="icon-tile w-9 h-9"><ShieldCheck className="w-4 h-4" /></span>
         <h2 className="card-title">Feature Flags</h2>
       </div>
-      <ul>
-        {FLAGS.map((f) => (
-          <li
-            key={f.name}
-            className="flex items-center justify-between gap-3 py-3 border-b border-line last:border-0 min-w-0"
-          >
-            <span className="text-[13px] font-mono text-fg break-all">{f.name}</span>
-            <FlagToggle state={f.state} />
-          </li>
-        ))}
-      </ul>
+      <p className="text-[13px] text-fg-2">
+        There are no feature flags. Platform behaviour is set by the deployed
+        configuration, and anything that varies between workspaces is on the
+        workspace itself: its mode, tier, enabled countries, recording,
+        expired-call handling and billing terms all live on the tenant page.
+      </p>
       <p className="text-xs text-fg-3 mt-4">
-        Coming soon. Feature flag management will live here.
+        This card will list flags once something is gated behind one.
       </p>
     </div>
-  );
-}
-
-function FlagToggle({ state }: { state: "DEFAULT" | "DISABLED" | "ENABLED" }) {
-  const cfg =
-    state === "ENABLED"
-      ? "bg-signal-500/15 text-signal-800"
-      : state === "DISABLED"
-        ? "bg-rose-500/15 text-rose-700"
-        : "bg-mute text-fg-2";
-  return (
-    <button
-      type="button"
-      disabled
-      className={`badge flex-shrink-0 ${cfg} cursor-not-allowed`}
-    >
-      {state}
-    </button>
   );
 }
 
@@ -303,39 +268,15 @@ function PodStatusCard() {
         <span className="icon-tile w-9 h-9"><Cpu className="w-4 h-4" /></span>
         <h2 className="card-title">Pod Status</h2>
       </div>
-      <table className="w-full border-collapse">
-        <thead>
-          <tr>
-            <th className="text-left font-normal eyebrow text-fg-3 pb-3">
-              Service
-            </th>
-            <th className="text-right font-normal eyebrow text-fg-3 pb-3">
-              Desired
-            </th>
-            <th className="text-right font-normal eyebrow text-fg-3 pb-3">
-              Ready
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {PODS.map((p) => (
-            <tr key={p.service} className="border-t border-line">
-              <td className="text-[13px] text-fg py-3 font-mono">
-                {p.service}
-              </td>
-              <td className="text-[13px] text-fg-2 py-3 text-right tabular-nums">
-                {p.desired}
-              </td>
-              <td className="text-[13px] text-fg-2 py-3 text-right tabular-nums">
-                {p.ready}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <p className="text-[13px] text-fg-2">
+        The platform runs as a single instance: the API, the workers and the
+        datastores are containers on one host, started together. There is no
+        orchestrator scheduling replicas, so there is nothing here to count.
+      </p>
       <p className="text-xs text-fg-3 mt-4">
-        Pod-level visibility requires the K8s introspection endpoint to be
-        wired up first.
+        The checks above are the live ones: database, cache, carrier and
+        dead-letter depth. They are what tells you whether this instance is
+        healthy.
       </p>
     </div>
   );

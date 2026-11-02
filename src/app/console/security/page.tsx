@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { Check, Copy, KeyRound, ShieldCheck, ShieldAlert } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import { PageHeader } from "@/components/page-header";
 import {
   confirmTotpEnrolment,
@@ -17,11 +18,14 @@ import { clearPersistedAdminToken } from "@/lib/auth-store";
 /**
  * Setting up the second factor on this operator account.
  *
- * Deliberately not a QR code. Rendering one needs an encoder, and the audit of
- * 1 November 2026 counted 35 advisories and four unused packages in the
- * backend tree, so a dependency to draw a square is not a trade worth making
- * for the handful of people who sign in here. Every authenticator app accepts
- * a typed secret, and the otpauth link below opens one directly on a phone.
+ * The QR code is rendered here in the browser, by qrcode.react, from the
+ * otpauth URI the backend returned. Nothing is sent anywhere to draw it: the
+ * URI carries the shared secret, so an encoder that called out to a service
+ * would be handing someone else the second factor. The typed key and the
+ * otpauth link stay as fallbacks, for a desktop authenticator or a camera
+ * that will not focus.
+ *
+ * The secret is never logged, on either side.
  */
 function groupSecret(secret: string): string {
   return secret.match(/.{1,4}/g)?.join(" ") ?? secret;
@@ -214,12 +218,26 @@ export default function SecurityPage() {
           <div>
             <h2 className="text-[16px] text-fg">1. Add this to your authenticator</h2>
             <p className="text-[13px] text-fg-3 mt-1">
-              Open your authenticator app, choose to add an account by entering a key, and type
-              this in. On a phone, the link below opens the app directly.
+              Scan the code with your authenticator app. If you cannot scan it, type the key in
+              instead, or open the link below on the phone that holds the app.
             </p>
           </div>
 
+          {/* White plate regardless of theme: a dark-on-dark code will not scan. */}
+          <div className="flex justify-center sm:justify-start">
+            <div className="bg-white rounded-xl p-3 border border-line inline-flex">
+              <QRCodeSVG
+                value={offer.otpauthUri}
+                size={176}
+                level="M"
+                marginSize={0}
+                title="Authenticator setup code"
+              />
+            </div>
+          </div>
+
           <div className="space-y-2">
+            <p className="text-[12px] text-fg-3">Or type the key in by hand:</p>
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
               <code className="font-mono text-[14px] text-fg bg-mute rounded-lg px-3 py-2.5 break-all tracking-wider flex-1">
                 {groupSecret(offer.secret)}

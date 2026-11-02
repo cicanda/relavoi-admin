@@ -105,6 +105,13 @@ export default function TenantDetailPage({
   });
 
   const tenant = tenantQ.data;
+  const usage = tenant?.usageLast30d ?? null;
+
+  /** A metered quantity, or a dash when the workspace has carried none. */
+  function metric(key: keyof NonNullable<typeof usage>["metrics"]): string {
+    const v = usage?.metrics?.[key];
+    return v === undefined || v === null ? "0" : String(v);
+  }
 
   const [form, setForm] = useState<TenantFormState>(() => initialForm());
   const [copied, setCopied] = useState(false);
@@ -435,16 +442,32 @@ export default function TenantDetailPage({
         </SectionCard>
 
         {/* Card 2 — Usage Summary */}
-        <SectionCard title="Usage Summary" subtitle="Last 30 days">
+        {/*
+          These are the metered quantities the endpoint returns, under the
+          names it meters them by. The card used to show "Active sessions",
+          "Calls (30d)", "SMS (30d)" and "Numbers in use", all permanently
+          "Not set", and none of those four is a thing the platform counts:
+          usage is metered as sessions created, call minutes, SMS in each
+          direction, and number rentals. Billable live traffic only, which is
+          what makes these the numbers a billing question is about.
+        */}
+        <SectionCard title="Usage Summary" subtitle="Last 30 days, billable">
           <div className="grid grid-cols-2 gap-2">
-            <UsageStat label="Active sessions" value="Not set" />
-            <UsageStat label="Calls (30d)" value="Not set" />
-            <UsageStat label="SMS (30d)" value="Not set" />
-            <UsageStat label="Numbers in use" value="Not set" />
+            <UsageStat label="Sessions created" value={metric("session_created")} />
+            <UsageStat label="Call minutes" value={metric("call_minute")} />
+            <UsageStat label="SMS sent" value={metric("sms_sent")} />
+            <UsageStat label="SMS received" value={metric("sms_received")} />
           </div>
-          <p className="mt-4 text-xs text-fg-3">
-            Usage details endpoint coming soon.
-          </p>
+          {usage ? (
+            <p className="mt-4 text-xs text-fg-3">
+              {usage.totalEvents} metered event{usage.totalEvents === 1 ? "" : "s"} in the
+              period.
+            </p>
+          ) : (
+            <p className="mt-4 text-xs text-fg-3">
+              No usage has been metered for this workspace yet.
+            </p>
+          )}
         </SectionCard>
 
         {/* Card 3 — Onboarding Context */}

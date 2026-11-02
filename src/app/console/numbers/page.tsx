@@ -139,13 +139,7 @@ export default function NumbersPage() {
       setConfirmAction(null);
       setReason("");
     } catch (err: unknown) {
-      if (is404(err)) {
-        toast.info("Endpoint coming soon", "Quarantine API is not yet implemented on the backend.");
-        setConfirmAction(null);
-        setReason("");
-      } else {
-        toast.error("Quarantine failed", (err as Error).message ?? "Unknown error");
-      }
+      toast.error("Quarantine failed", (err as Error).message ?? "Unknown error");
     } finally {
       setBusy(false);
     }
@@ -160,12 +154,7 @@ export default function NumbersPage() {
       await qc.invalidateQueries({ queryKey: ["fleet"] });
       setConfirmAction(null);
     } catch (err: unknown) {
-      if (is404(err)) {
-        toast.info("Endpoint coming soon", "Release API is not yet implemented on the backend.");
-        setConfirmAction(null);
-      } else {
-        toast.error("Release failed", (err as Error).message ?? "Unknown error");
-      }
+      toast.error("Release failed", (err as Error).message ?? "Unknown error");
     } finally {
       setBusy(false);
     }

@@ -94,18 +94,7 @@ export default function PricingPage() {
     },
     onSuccess: (results, vars) => {
       const failed = results.filter((r) => r.status === "rejected");
-      const cameSoon = failed.some(
-        (r) =>
-          r.status === "rejected" &&
-          isAxiosError(r.reason) &&
-          r.reason.response?.status === 404,
-      );
-      if (cameSoon) {
-        toast.info(
-          "Endpoint coming soon",
-          "Pricing patch endpoint is not yet wired on the backend.",
-        );
-      } else if (failed.length > 0) {
+      if (failed.length > 0) {
         toast.error(
           "Some rows failed",
           `${failed.length} of ${results.length} updates rejected.`,
@@ -119,14 +108,7 @@ export default function PricingPage() {
       qc.invalidateQueries({ queryKey: ["pricing"] });
     },
     onError: (err) => {
-      if (isAxiosError(err) && err.response?.status === 404) {
-        toast.info(
-          "Endpoint coming soon",
-          "Pricing patch endpoint is not yet wired on the backend.",
-        );
-      } else {
-        toast.error("Save failed", err instanceof Error ? err.message : "Unknown error");
-      }
+      toast.error("Save failed", err instanceof Error ? err.message : "Unknown error");
     },
   });
 

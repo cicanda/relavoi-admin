@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { isAxiosError } from "axios";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -57,10 +56,11 @@ export default function DlqPage() {
     refetchInterval: 15_000,
   });
 
+  // POST /admin/dlq/retry and POST /admin/dlq/:id/abandon both exist, so a 404
+  // here means a wrong id or a routing problem, not an unbuilt feature. It
+  // used to be reported as "Endpoint coming soon", which told an operator to
+  // stop trying when something was actually wrong.
   function explainError(err: unknown, fallback: string): string {
-    if (isAxiosError(err) && err.response?.status === 404) {
-      return "Endpoint not yet implemented";
-    }
     if (err instanceof Error) return err.message;
     return fallback;
   }
@@ -72,12 +72,7 @@ export default function DlqPage() {
       qc.invalidateQueries({ queryKey: ["dlq"] });
     },
     onError: (err) => {
-      const msg = explainError(err, "Retry failed");
-      if (msg === "Endpoint not yet implemented") {
-        toast.info("Endpoint coming soon", msg);
-      } else {
-        toast.error("Retry failed", msg);
-      }
+      toast.error("Retry failed", explainError(err, "Retry failed"));
     },
   });
 
@@ -88,12 +83,7 @@ export default function DlqPage() {
       qc.invalidateQueries({ queryKey: ["dlq"] });
     },
     onError: (err) => {
-      const msg = explainError(err, "Abandon failed");
-      if (msg === "Endpoint not yet implemented") {
-        toast.info("Endpoint coming soon", msg);
-      } else {
-        toast.error("Abandon failed", msg);
-      }
+      toast.error("Abandon failed", explainError(err, "Abandon failed"));
     },
   });
 

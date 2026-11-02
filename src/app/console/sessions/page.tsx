@@ -10,7 +10,7 @@ import {
   Search,
 } from "lucide-react";
 
-import { listAdminSessions, listTenants } from "@/lib/api";
+import { getFleet, listAdminSessions, listTenants } from "@/lib/api";
 import { PageHeader } from "@/components/page-header";
 import { StatePill } from "@/components/state-pill";
 import { SkeletonRow } from "@/components/skeleton";
@@ -26,7 +26,18 @@ const STATE_OPTIONS: { value: "ALL" | SessionState; label: string }[] = [
   { value: "FAILED", label: "FAILED" },
 ];
 
-const FIXED_REGIONS = ["lagos", "abuja", "port harcourt"];
+/*
+ * The region list used to be the literal ["lagos", "abuja", "port harcourt"],
+ * and the filter itself did nothing: its body matched a tenant's country
+ * against a region name and then deliberately dropped nothing, under the
+ * comment "no-op until backend exposes region on session". So an operator
+ * could pick a region and watch the list not change.
+ *
+ * A session has no region of its own, but its proxy number does, and
+ * /admin/fleet already returns every number with its region. Joining through
+ * the number is what the filter needed, and the options are now whatever
+ * regions the pool actually holds.
+ */
 
 export default function SessionsPage() {
   const [tenantId, setTenantId] = useState<string>("ALL");
@@ -97,33 +108,40 @@ export default function SessionsPage() {
 
   const allSessions = useMemo(() => pages.flat(), [pages]);
 
-  // Derive region options from loaded sessions, fall back to fixed list
-  const derivedRegions = useMemo(() => {
-    const set = new Set<string>();
-    allSessions.forEach((s) => {
-      // Sessions don't carry region directly; this is a placeholder
-      // since the backend Session type does not include region.
-      // If a tenant has a country, we don't have per-session region.
-      void s;
-    });
-    return set.size > 0 ? Array.from(set).sort() : FIXED_REGIONS;
-  }, [allSessions]);
+  const fleetQ = useQuery({
+    queryKey: ["console", "fleet-regions"],
+    queryFn: getFleet,
+    staleTime: 5 * 60_000,
+  });
+
+  /** Proxy number to the region it was provisioned in. */
+  const regionByProxy = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const n of fleetQ.data?.numbers ?? []) {
+      if (n.region) m.set(n.number, n.region);
+    }
+    return m;
+  }, [fleetQ.data]);
+
+  const derivedRegions = useMemo(
+    () => Array.from(new Set(regionByProxy.values())).sort(),
+    [regionByProxy],
+  );
 
   // Client-side filter
   const visibleSessions = useMemo(() => {
     return allSessions.filter((s) => {
       if (proxySearch.trim() && !s.proxyNumber.includes(proxySearch.trim())) return false;
-      // region filter is a no-op until backend exposes region on session
       if (regionFilter !== "ALL") {
-        // best-effort: match against tenant country if present
-        const t = tenantMap.get(s.tenantId);
-        if (t?.country && t.country.toLowerCase() !== regionFilter) {
-          // permissive: don't drop unless we know the region differs
-        }
+        // A number we have no region for is not silently dropped: until the
+        // fleet query lands, regionByProxy is empty, and dropping everything
+        // would read as "no sessions in Lagos" rather than "still loading".
+        const region = regionByProxy.get(s.proxyNumber);
+        if (region !== undefined && region !== regionFilter) return false;
       }
       return true;
     });
-  }, [allSessions, proxySearch, regionFilter, tenantMap]);
+  }, [allSessions, proxySearch, regionFilter, regionByProxy]);
 
   function directionIcon(dir?: Session["directionMode"]) {
     if (dir === "A_TO_B_ONLY") return <ArrowRight className="w-3.5 h-3.5 text-fg-2" />;

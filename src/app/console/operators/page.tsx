@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { isAxiosError } from "axios";
 import { Edit, Lock, Trash2, UserPlus, X } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { RolePill, StatePill } from "@/components/state-pill";
@@ -52,14 +51,10 @@ export default function OperatorsPage() {
       qc.invalidateQueries({ queryKey: ["operators"] });
     },
     onError: (err) => {
-      if (isAxiosError(err) && err.response?.status === 404) {
-        toast.info("Endpoint coming soon", "Operator deactivation is not yet wired.");
-      } else {
-        toast.error(
-          "Deactivate failed",
-          err instanceof Error ? err.message : "Unknown error",
-        );
-      }
+      toast.error(
+        "Deactivate failed",
+        err instanceof Error ? err.message : "Unknown error",
+      );
     },
   });
 
@@ -70,14 +65,7 @@ export default function OperatorsPage() {
       qc.invalidateQueries({ queryKey: ["operators"] });
     },
     onError: (err) => {
-      if (isAxiosError(err) && err.response?.status === 404) {
-        toast.info("Endpoint coming soon", "Operator deletion is not yet wired.");
-      } else {
-        toast.error(
-          "Delete failed",
-          err instanceof Error ? err.message : "Unknown error",
-        );
-      }
+      toast.error("Delete failed", err instanceof Error ? err.message : "Unknown error");
     },
   });
 
@@ -303,14 +291,7 @@ function AddOperatorModal({
       onCreated();
     },
     onError: (err) => {
-      if (isAxiosError(err) && err.response?.status === 404) {
-        toast.info("Endpoint coming soon", "Operator creation is not yet wired.");
-      } else {
-        toast.error(
-          "Create failed",
-          err instanceof Error ? err.message : "Unknown error",
-        );
-      }
+      toast.error("Create failed", err instanceof Error ? err.message : "Unknown error");
     },
   });
 
@@ -415,12 +396,24 @@ function EditOperatorModal({
   const toast = useToast();
   const qc = useQueryClient();
   const [role, setRole] = useState<OperatorRole>(operator.role);
+  // The name was rendered as a disabled input, although PATCH
+  // /admin/operators/:id has always accepted it. An operator whose name was
+  // wrong had no way to correct it. The email stays read-only, because that is
+  // genuinely not patchable: it is the login identity.
+  const [name, setName] = useState<string>(operator.name);
   const [busy, setBusy] = useState(false);
 
+  const trimmedName = name.trim();
+  const nameChanged = trimmedName !== "" && trimmedName !== operator.name;
+
   const updateM = useMutation({
-    mutationFn: () => updateOperator(operator.id, { role }),
+    mutationFn: () =>
+      updateOperator(operator.id, { role, ...(nameChanged ? { name: trimmedName } : {}) }),
     onSuccess: () => {
-      toast.success("Operator updated", `Role set to ${role}.`);
+      toast.success(
+        "Operator updated",
+        nameChanged ? `Saved as ${trimmedName}, role ${role}.` : `Role set to ${role}.`,
+      );
       onClose();
     },
     onError: (err: unknown) => {
@@ -448,8 +441,9 @@ function EditOperatorModal({
         <Field label="Name">
           <input
             type="text"
-            defaultValue={operator.name}
-            disabled
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={255}
             className="field w-full"
           />
         </Field>
