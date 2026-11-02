@@ -381,12 +381,6 @@ export async function getCpaasStatus() {
   return h.circuitBreakers ?? [];
 }
 
-export async function forceCircuitState(provider: string, state: "CLOSED" | "OPEN") {
-  const suffix = state === "OPEN" ? "force-open" : "force-close";
-  const { data } = await adminApi.post(`/cpaas/${provider}/${suffix}`);
-  return data;
-}
-
 // ─── Overview (synthetic from existing endpoints) ─────────────────────────────
 //
 // The spec calls for GET /admin/overview returning a "platform stats with

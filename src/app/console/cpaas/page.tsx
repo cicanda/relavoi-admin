@@ -1,26 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
+import { useQuery } from "@tanstack/react-query";
 import { RefreshCw, Radio } from "lucide-react";
 
-import { getCpaasStatus, getFleet, forceCircuitState } from "@/lib/api";
+import { getCpaasStatus, getFleet } from "@/lib/api";
 import { useAdminAuth } from "@/lib/auth-store";
-import { useToast } from "@/components/toast";
 import { PageHeader } from "@/components/page-header";
 import { StatePill } from "@/components/state-pill";
 import { Skeleton } from "@/components/skeleton";
 import { fmtRelative, fmtNumber } from "@/lib/format";
 import type { CircuitBreakerStatus, ProxyNumber } from "@/lib/types";
 
-function is404(err: unknown): boolean {
-  return axios.isAxiosError(err) && err.response?.status === 404;
-}
-
 export default function CpaasPage() {
-  const qc = useQueryClient();
-  const toast = useToast();
   const role = useAdminAuth((s) => s.operator?.role);
   const isRoot = role === "ROOT";
 
@@ -37,43 +28,11 @@ export default function CpaasPage() {
     staleTime: 30_000,
   });
 
-  const [confirm, setConfirm] = useState<
-    | { provider: string; state: "OPEN" | "CLOSED" }
-    | null
-  >(null);
-  const [busy, setBusy] = useState(false);
-
   const providers = cpaasQ.data ?? [];
   const numbers: ProxyNumber[] = fleetQ.data?.numbers ?? [];
 
   function poolCountFor(provider: string): number {
     return numbers.filter((n) => n.provider === provider).length;
-  }
-
-  async function handleForce(): Promise<void> {
-    if (!confirm) return;
-    setBusy(true);
-    try {
-      await forceCircuitState(confirm.provider, confirm.state);
-      toast.success(
-        `Circuit forced ${confirm.state}`,
-        `${confirm.provider} breaker updated.`,
-      );
-      await qc.invalidateQueries({ queryKey: ["cpaas"] });
-      setConfirm(null);
-    } catch (err: unknown) {
-      if (is404(err)) {
-        toast.info(
-          "Endpoint coming soon",
-          "Circuit override is not yet implemented on the backend.",
-        );
-        setConfirm(null);
-      } else {
-        toast.error("Force failed", (err as Error).message ?? "Unknown error");
-      }
-    } finally {
-      setBusy(false);
-    }
   }
 
   return (
@@ -113,56 +72,11 @@ export default function CpaasPage() {
               cb={cb}
               poolCount={poolCountFor(cb.provider)}
               isRoot={isRoot}
-              onForce={(state) => setConfirm({ provider: cb.provider, state })}
             />
           ))}
         </div>
       )}
 
-      {confirm && (
-        <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="force-circuit-title">
-          <div className="modal">
-            <h2 id="force-circuit-title" className="modal-title">
-              Force circuit {confirm.state}
-            </h2>
-            <p className="text-sm text-fg-2 mt-2 mb-6 leading-relaxed">
-              This will override the automated breaker state for{" "}
-              <span className="font-mono text-fg uppercase">{confirm.provider}</span>. New
-              sessions will{" "}
-              {confirm.state === "OPEN"
-                ? "stop routing through this provider"
-                : "resume routing through this provider"}
-              .
-            </p>
-            <div className="modal-actions">
-              <button
-                onClick={() => setConfirm(null)}
-                disabled={busy}
-                className="btn btn-secondary"
-              >
-                Cancel
-              </button>
-              {confirm.state === "OPEN" ? (
-                <button
-                  onClick={handleForce}
-                  disabled={busy}
-                  className="btn btn-danger-soft"
-                >
-                  {busy ? "Forcing…" : "Confirm Force Open"}
-                </button>
-              ) : (
-                <button
-                  onClick={handleForce}
-                  disabled={busy}
-                  className="btn btn-accent"
-                >
-                  {busy ? "Forcing…" : "Confirm Force Close"}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -171,12 +85,10 @@ function ProviderCard({
   cb,
   poolCount,
   isRoot,
-  onForce,
 }: {
   cb: CircuitBreakerStatus;
   poolCount: number;
   isRoot: boolean;
-  onForce: (state: "OPEN" | "CLOSED") => void;
 }) {
   const dotColor =
     cb.state === "CLOSED"
@@ -231,20 +143,21 @@ function ProviderCard({
         </div>
       )}
 
+      {/*
+        There were Force Open and Force Close buttons here. No endpoint has ever
+        existed behind them, so the only thing they did was raise a toast saying
+        the feature was coming. A control that cannot act on an outage is worse
+        than none during one.
+
+        The breaker is driven by the health checks and the failures it counts.
+        If it needs overriding by hand, that is a deploy, not a button.
+      */}
       {isRoot && (
-        <div className="mt-auto flex flex-wrap items-center gap-2 pt-5 border-t border-line">
-          <button
-            onClick={() => onForce("OPEN")}
-            className="btn btn-danger-soft"
-          >
-            Force Open
-          </button>
-          <button
-            onClick={() => onForce("CLOSED")}
-            className="btn btn-secondary"
-          >
-            Force Close
-          </button>
+        <div className="mt-auto pt-5 border-t border-line">
+          <p className="text-[12px] text-fg-3">
+            This state is set by the health checks and the call failures the breaker counts.
+            There is no manual override.
+          </p>
         </div>
       )}
     </section>
