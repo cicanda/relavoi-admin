@@ -94,6 +94,8 @@ export interface DlqEntry {
   status: "PENDING" | "RETRYING" | "RESOLVED" | "ABANDONED";
   firstReceivedAt?: string;
   lastRetryAt?: string | null;
+  /** When the DLQ worker will next pick this up. Null means it is due now. */
+  nextRetryAt?: string | null;
   resolvedAt?: string | null;
 }
 

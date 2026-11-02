@@ -108,9 +108,9 @@ export default function DlqPage() {
 
   function askRetryAll() {
     setConfirm({
-      title: "Retry all PENDING events?",
+      title: "Retry every event still in play?",
       description:
-        "This re-enqueues every PENDING event in the dead letter queue. Already-RETRYING entries are skipped by the backend.",
+        "Queues every PENDING and RETRYING event for the DLQ worker, which retries with backoff and gives up after the attempt budget. Abandoned events are left alone: select one to retry it on its own.",
       confirmLabel: "Retry all",
       onConfirm: async () => {
         await retryM.mutateAsync([]);
