@@ -200,10 +200,48 @@ export interface FleetRegion {
   quarantined: number;
 }
 
+/**
+ * Which workspace is holding which numbers.
+ *
+ * The pool is shared and `proxy_numbers` has no tenant column, so until the
+ * quota work nothing anywhere could answer "who is using these", which is the
+ * first question when the pool runs hot. Read from the live Redis footprints,
+ * which is what the allocator enforces the per-plan cap against, so this and
+ * the enforcement cannot disagree.
+ */
+export interface NumberHolding {
+  tenantId: string;
+  workspace: string;
+  tier: string;
+  held: number;
+  numbers: string[];
+  quota: number;
+}
+
+/** A workspace asking to hold more numbers at once. */
+export interface NumberQuotaRequest {
+  id: string;
+  tenantId: string;
+  workspace: string;
+  tier: string;
+  status: "PENDING" | "APPROVED" | "DECLINED" | "WITHDRAWN";
+  /** A total, not an increment. */
+  requestedTotal: number;
+  quotaAtRequest: number;
+  region: string;
+  note: string | null;
+  createdAt: string;
+  grantedTotal: number | null;
+  decidedAt: string | null;
+  decisionNote: string | null;
+}
+
 export interface FleetSummary {
   pools?: PoolStatus[];
   numbers?: ProxyNumber[];
   byRegion?: FleetRegion[];
+  holdings?: NumberHolding[];
+  pendingNumberRequests?: NumberQuotaRequest[];
   totals?: {
     total?: number;
     available?: number;
@@ -215,6 +253,43 @@ export interface FleetSummary {
 
 export async function getFleet() {
   const { data } = await adminApi.get<FleetSummary>("/fleet");
+  return data;
+}
+
+export async function listNumberRequests() {
+  const { data } = await adminApi.get<{ requests: NumberQuotaRequest[] }>("/numbers/requests");
+  return data.requests ?? [];
+}
+
+export async function listNumberHoldings() {
+  const { data } = await adminApi.get<{ holdings: NumberHolding[] }>("/numbers/holdings");
+  return data.holdings ?? [];
+}
+
+/**
+ * Approve an ask. `grantedTotal` defaults to what was asked for; a lower
+ * figure is a part-approval. The note is sent to the workspace verbatim, so
+ * the backend refuses one carrying a phone number or a supplier's name.
+ *
+ * Approving writes a plan override, which is what raises the cap. It applies
+ * to the next session the workspace creates: nothing to deploy.
+ */
+export async function approveNumberRequest(
+  id: string,
+  args: { grantedTotal?: number; note?: string },
+) {
+  const { data } = await adminApi.post<NumberQuotaRequest>(
+    `/numbers/requests/${id}/approve`,
+    args,
+  );
+  return data;
+}
+
+/** Decline an ask. The note is required: it is the answer, and it is emailed. */
+export async function declineNumberRequest(id: string, note: string) {
+  const { data } = await adminApi.post<NumberQuotaRequest>(`/numbers/requests/${id}/decline`, {
+    note,
+  });
   return data;
 }
 
