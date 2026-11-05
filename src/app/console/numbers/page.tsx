@@ -14,11 +14,15 @@ import {
 } from "lucide-react";
 
 import {
+  admitNumber,
   approveNumberRequest,
   declineNumberRequest,
   getFleet,
   quarantineNumber,
+  registerNumber,
   releaseNumber,
+  retireNumber,
+  startNumberVerification,
 } from "@/lib/api";
 import { useAdminAuth } from "@/lib/auth-store";
 import { useToast } from "@/components/toast";
@@ -27,10 +31,17 @@ import { StatCard } from "@/components/stat-card";
 import { StatePill } from "@/components/state-pill";
 import { SkeletonRow } from "@/components/skeleton";
 import { fmtRelative, fmtNumber } from "@/lib/format";
-import type { ProxyNumber, PoolStatus } from "@/lib/types";
+import type { ProxyNumber, PoolStatus, NumberVerification } from "@/lib/types";
 import type { NumberHolding, NumberQuotaRequest } from "@/lib/api";
 
-type StatusFilter = "ALL" | "AVAILABLE" | "IN_USE" | "COOLDOWN" | "QUARANTINED";
+type StatusFilter =
+  | "ALL"
+  | "PENDING_VERIFICATION"
+  | "AVAILABLE"
+  | "IN_USE"
+  | "COOLDOWN"
+  | "QUARANTINED"
+  | "RETIRED";
 type ProviderFilter = "ALL" | "AFRICASTALKING" | "TWILIO" | "PLIVO";
 
 interface Totals {
@@ -82,6 +93,79 @@ function deriveTotals(
   return { total: 0, available: 0, inUse: 0, cooldown: 0, quarantined: 0 };
 }
 
+/**
+ * Where a number is in the register / verify / admit flow.
+ *
+ * This replaced the Health Check column, which was always empty: nothing has
+ * ever written proxy_numbers.health_check_at. Verification is the signal that
+ * actually says whether a number has been proven to reach us.
+ *
+ * For a pending number it names the half that has not arrived, because that is
+ * the actionable sentence. The inbound callback proves the carrier's Callback
+ * URL points at us; the terminal event proves its Events URL does. A missing
+ * terminal event is the fault that left 26 calls stuck for four months, and it
+ * is invisible from the call itself, which connects and sounds perfect.
+ */
+function VerificationCell({ v }: { v: NumberVerification | undefined }): React.ReactElement {
+  if (!v) return <span className="text-fg-3 text-xs">Unknown</span>;
+  if (v.state === "verified") {
+    return (
+      <span className="text-signal-500 text-xs whitespace-nowrap">
+        Verified {fmtRelative(v.verifiedAt)}
+      </span>
+    );
+  }
+  if (v.state === "grandfathered") {
+    return (
+      <span className="text-amber-500 text-xs whitespace-nowrap">
+        Never verified (grandfathered)
+      </span>
+    );
+  }
+  if (v.state === "unverified") {
+    return <span className="text-fg-3 text-xs whitespace-nowrap">Not verified</span>;
+  }
+  if (v.expired) {
+    return (
+      <span className="text-rose-500 text-xs whitespace-nowrap">
+        Window expired{v.missing ? `, no ${v.missing}` : ", no call arrived"}
+      </span>
+    );
+  }
+  if (v.callbackSeen && v.terminalSeen) {
+    return <span className="text-signal-500 text-xs whitespace-nowrap">Both received</span>;
+  }
+  if (v.missing) {
+    return (
+      <span className="text-amber-500 text-xs whitespace-nowrap">
+        Waiting for the {v.missing}
+      </span>
+    );
+  }
+  return (
+    <span className="text-fg-2 text-xs whitespace-nowrap">
+      Waiting for the call, until {fmtRelative(v.deadlineAt)}
+    </span>
+  );
+}
+
+/**
+ * The backend's own words, not "Request failed with status code 409".
+ *
+ * These routes refuse things for reasons an operator can act on: a number that
+ * is not verified and which half never arrived, a country that is described
+ * but not enabled, live sessions still holding a number. All of it is in the
+ * RFC 7807 `detail`, and throwing that away would leave the operator with
+ * nothing to go on.
+ */
+function apiMessage(err: unknown): string {
+  if (axios.isAxiosError(err)) {
+    const detail = (err.response?.data as { detail?: unknown } | undefined)?.detail;
+    if (typeof detail === "string" && detail.trim() !== "") return detail;
+  }
+  return (err as Error)?.message ?? "Unknown error";
+}
+
 function is404(err: unknown): boolean {
   return axios.isAxiosError(err) && err.response?.status === 404;
 }
@@ -99,8 +183,19 @@ export default function NumbersPage() {
   const [confirmAction, setConfirmAction] = useState<
     | { kind: "quarantine"; number: string }
     | { kind: "release"; number: string }
+    | { kind: "verify"; number: string }
+    | { kind: "admit"; number: string }
+    | { kind: "retire"; number: string }
     | null
   >(null);
+  // Registering a number Kay has already bought from the carrier. Nothing here
+  // buys one.
+  const [registering, setRegistering] = useState(false);
+  const [newNumber, setNewNumber] = useState("");
+  const [newCountry, setNewCountry] = useState("NG");
+  // What the operator is told to do after a window opens. Held in state so it
+  // stays on screen while they walk to a phone.
+  const [callInstruction, setCallInstruction] = useState<string | null>(null);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -114,8 +209,15 @@ export default function NumbersPage() {
   const { data, isLoading, refetch, isFetching } = useQuery({
     queryKey: ["fleet"],
     queryFn: getFleet,
-    refetchInterval: 30_000,
-    staleTime: 30_000,
+    // Faster while a verification is open, because an operator is standing
+    // next to a phone waiting for this page to change. Back to 30s otherwise.
+    refetchInterval: (q) =>
+      (q.state.data?.numbers ?? []).some(
+        (n: ProxyNumber) => n.status === "PENDING_VERIFICATION",
+      )
+        ? 5_000
+        : 30_000,
+    staleTime: 5_000,
   });
 
   const pool = data?.pools ?? [];
@@ -165,12 +267,86 @@ export default function NumbersPage() {
     if (!confirmAction || confirmAction.kind !== "release") return;
     setBusy(true);
     try {
-      await releaseNumber(confirmAction.number);
-      toast.success("Number released", confirmAction.number);
+      await releaseNumber(confirmAction.number, reason || undefined);
+      toast.success(
+        "Sent back for verification",
+        "It has to be called again before it can carry a call.",
+      );
       await qc.invalidateQueries({ queryKey: ["fleet"] });
       setConfirmAction(null);
     } catch (err: unknown) {
       toast.error("Release failed", (err as Error).message ?? "Unknown error");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleRegister(): Promise<void> {
+    setBusy(true);
+    try {
+      await registerNumber({
+        number: newNumber.trim(),
+        countryCode: newCountry.trim().toUpperCase(),
+        reason,
+      });
+      toast.success("Number registered", "It cannot carry a call until it is verified.");
+      await qc.invalidateQueries({ queryKey: ["fleet"] });
+      setRegistering(false);
+      setNewNumber("");
+      setReason("");
+    } catch (err: unknown) {
+      toast.error("Registration failed", apiMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleVerify(): Promise<void> {
+    if (confirmAction?.kind !== "verify") return;
+    setBusy(true);
+    try {
+      const res = await startNumberVerification(confirmAction.number, reason);
+      setCallInstruction(res.instruction);
+      toast.success("Verification window open", `Call ${confirmAction.number} now.`);
+      await qc.invalidateQueries({ queryKey: ["fleet"] });
+      setConfirmAction(null);
+      setReason("");
+    } catch (err: unknown) {
+      toast.error("Could not open the window", apiMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleAdmit(): Promise<void> {
+    if (confirmAction?.kind !== "admit") return;
+    setBusy(true);
+    try {
+      await admitNumber(confirmAction.number, reason);
+      toast.success("Number admitted", "It is in the pool and can carry calls.");
+      await qc.invalidateQueries({ queryKey: ["fleet"] });
+      setConfirmAction(null);
+      setReason("");
+    } catch (err: unknown) {
+      // The useful case: the backend refuses an unverified number and says
+      // which half never came. Surfacing its words beats a generic failure.
+      toast.error("Not admitted", apiMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleRetire(): Promise<void> {
+    if (confirmAction?.kind !== "retire") return;
+    setBusy(true);
+    try {
+      await retireNumber(confirmAction.number, reason);
+      toast.success("Number retired", confirmAction.number);
+      await qc.invalidateQueries({ queryKey: ["fleet"] });
+      setConfirmAction(null);
+      setReason("");
+    } catch (err: unknown) {
+      toast.error("Could not retire it", apiMessage(err));
     } finally {
       setBusy(false);
     }
@@ -220,6 +396,21 @@ export default function NumbersPage() {
         title="Number Pool"
         description="Provisioned proxy numbers across the platform"
         actions={
+          <>
+            {canManage && (
+              <button
+                onClick={() => {
+                  setRegistering(true);
+                  setNewNumber("");
+                  setNewCountry("NG");
+                  setReason("");
+                }}
+                className="btn btn-accent"
+              >
+                <Hash className="w-4 h-4" />
+                Register a number
+              </button>
+            )}
           <button
             onClick={() => refetch()}
             disabled={isFetching}
@@ -228,8 +419,37 @@ export default function NumbersPage() {
             <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
             Refresh
           </button>
+          </>
         }
       />
+
+      {/* What to do next, kept on screen while the operator walks to a phone.
+          The window is short and the page polls every five seconds while
+          anything is pending, so this and the Verification column together are
+          the whole of the waiting experience. */}
+      {callInstruction && (
+        <div className="card card-pad mb-[var(--gap)] border-l-2 border-l-accent">
+          <div className="flex items-start gap-3">
+            <Radio className="w-4 h-4 text-accent mt-[2px] shrink-0" />
+            <div className="min-w-0">
+              <div className="text-[15px] text-fg mb-1">Call the number now</div>
+              <p className="text-sm text-fg-2">{callInstruction}</p>
+              <p className="text-sm text-fg-3 mt-2">
+                Verified means two things arrived: the call itself, which proves the
+                carrier&apos;s Callback URL points at us, and the event that ends it, which
+                proves its Events URL does. A number with only the first is the fault that
+                left 26 calls stuck for four months, so it stays pending.
+              </p>
+              <button
+                onClick={() => setCallInstruction(null)}
+                className="btn btn-secondary btn-sm mt-3"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Stat cards */}
       <div className="bento mb-[var(--gap)]">
@@ -422,10 +642,12 @@ export default function NumbersPage() {
           label="Status"
           options={[
             { value: "ALL", label: "All" },
+            { value: "PENDING_VERIFICATION", label: "PENDING_VERIFICATION" },
             { value: "AVAILABLE", label: "AVAILABLE" },
             { value: "IN_USE", label: "IN_USE" },
             { value: "COOLDOWN", label: "COOLDOWN" },
             { value: "QUARANTINED", label: "QUARANTINED" },
+            { value: "RETIRED", label: "RETIRED" },
           ]}
           value={statusFilter}
           onChange={(v) => setStatusFilter(v as StatusFilter)}
@@ -463,7 +685,7 @@ export default function NumbersPage() {
                 <th>Provider</th>
                 <th>Status</th>
                 <th>Last Used</th>
-                <th>Health Check</th>
+                <th>Verification</th>
                 {canManage && <th className="text-right">Actions</th>}
               </tr>
             </thead>
@@ -487,6 +709,11 @@ export default function NumbersPage() {
                 filteredNumbers.map((n) => {
                   const canQuarantine = n.status === "AVAILABLE" || n.status === "IN_USE";
                   const canRelease = n.status === "COOLDOWN" || n.status === "QUARANTINED";
+                  const pending = n.status === "PENDING_VERIFICATION";
+                  // Admit is offered only once both halves are in. Offering it
+                  // earlier would invite an operator to press a button that
+                  // cannot work, and the database would refuse it anyway.
+                  const canAdmit = pending && n.verification?.state === "verified";
                   return (
                     <tr key={n.number}>
                       <td className="font-mono whitespace-nowrap">
@@ -504,12 +731,46 @@ export default function NumbersPage() {
                       <td className="text-fg-2 whitespace-nowrap">
                         {fmtRelative(n.lastUsedAt)}
                       </td>
-                      <td className="text-fg-2 whitespace-nowrap">
-                        {fmtRelative(n.healthCheckAt)}
+                      <td>
+                        <VerificationCell v={n.verification} />
                       </td>
                       {canManage && (
-                        <td className="text-right">
-                          {canQuarantine ? (
+                        <td className="text-right whitespace-nowrap">
+                          {pending ? (
+                            <>
+                              {canAdmit ? (
+                                <button
+                                  onClick={() => {
+                                    setConfirmAction({ kind: "admit", number: n.number });
+                                    setReason("");
+                                  }}
+                                  className="btn btn-accent btn-sm"
+                                >
+                                  Admit to pool
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => {
+                                    setConfirmAction({ kind: "verify", number: n.number });
+                                    setReason("");
+                                  }}
+                                  className="btn btn-secondary btn-sm"
+                                >
+                                  <Radio className="w-3 h-3" />
+                                  Verify by call
+                                </button>
+                              )}{" "}
+                              <button
+                                onClick={() => {
+                                  setConfirmAction({ kind: "retire", number: n.number });
+                                  setReason("");
+                                }}
+                                className="btn btn-secondary btn-sm"
+                              >
+                                Retire
+                              </button>
+                            </>
+                          ) : canQuarantine ? (
                             <button
                               onClick={() => {
                                 setConfirmAction({ kind: "quarantine", number: n.number });
@@ -637,30 +898,150 @@ export default function NumbersPage() {
         </div>
       )}
 
+      {/* Register a number we already own. */}
+      {registering && (
+        <div
+          className="modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="number-register-title"
+        >
+          <div className="modal">
+            <h2 id="number-register-title" className="modal-title">
+              Register a number
+            </h2>
+            <p className="text-sm text-fg-2 mt-1 mb-5">
+              For a DID that has already been bought from the carrier and had both of its
+              voice fields pointed at us. This does not buy a number, and it does not put
+              it in the pool: it lands pending, and a real call has to prove it first.
+            </p>
+            <div className="mb-4">
+              <label className="field-label eyebrow" htmlFor="reg-number">
+                Number
+              </label>
+              <input
+                id="reg-number"
+                value={newNumber}
+                onChange={(e) => setNewNumber(e.target.value)}
+                placeholder="+2342017001428"
+                className="field w-full font-mono"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="field-label eyebrow" htmlFor="reg-country">
+                Country
+              </label>
+              <input
+                id="reg-country"
+                value={newCountry}
+                onChange={(e) => setNewCountry(e.target.value.toUpperCase())}
+                maxLength={2}
+                placeholder="NG"
+                className="field w-full font-mono uppercase"
+              />
+              <p className="text-xs text-fg-3 mt-1">
+                The region is taken from the country rather than typed, because a typo in a
+                region makes a number unallocatable and invisible in the counts.
+              </p>
+            </div>
+            <div className="mb-5">
+              <label className="field-label eyebrow" htmlFor="reg-reason">
+                Reason
+              </label>
+              <textarea
+                id="reg-reason"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                rows={3}
+                placeholder="e.g. second Lagos DID bought to raise pool capacity"
+                className="field w-full"
+              />
+            </div>
+            <div className="modal-actions">
+              <button
+                onClick={() => setRegistering(false)}
+                disabled={busy}
+                className="btn btn-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRegister}
+                disabled={busy || newNumber.trim() === "" || reason.trim().length < 10}
+                className="btn btn-accent"
+              >
+                {busy ? "Registering…" : "Register"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Confirm modal */}
       {confirmAction && (
         <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="number-action-title">
           <div className="modal">
             <h2 id="number-action-title" className="modal-title">
-              {confirmAction.kind === "quarantine" ? "Quarantine number" : "Release number"}
+              {confirmAction.kind === "quarantine"
+                ? "Quarantine number"
+                : confirmAction.kind === "release"
+                  ? "Send back for verification"
+                  : confirmAction.kind === "verify"
+                    ? "Open a verification window"
+                    : confirmAction.kind === "admit"
+                      ? "Admit to the pool"
+                      : "Retire number"}
             </h2>
             <p className="text-sm text-fg-2 mt-1 mb-5">
               <span className="font-mono text-fg">{confirmAction.number}</span>
             </p>
             {confirmAction.kind === "quarantine" && (
-              <div className="mb-5">
-                <label className="field-label eyebrow">
-                  Reason
-                </label>
-                <textarea
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  rows={3}
-                  placeholder="e.g. abuse report, health check failures"
-                  className="field w-full"
-                />
-              </div>
+              <p className="text-sm text-fg-2 mb-4">
+                This also withdraws the number&apos;s verification. A number is quarantined
+                because it started misbehaving, and the likeliest cause is that its carrier
+                configuration changed underneath us, which is what the verification ruled
+                out. Releasing it later will need another call.
+              </p>
             )}
+            {confirmAction.kind === "release" && (
+              <p className="text-sm text-fg-2 mb-4">
+                This returns the number to pending, not to the pool. It has to be called
+                again before it can carry anything.
+              </p>
+            )}
+            {confirmAction.kind === "verify" && (
+              <p className="text-sm text-fg-2 mb-4">
+                Opens a short window. Dial the number from any phone and you should hear
+                &quot;This number is connected to Relavoi&quot;. It is verified once both
+                that call and the event that ends it have reached us.
+              </p>
+            )}
+            {confirmAction.kind === "retire" && (
+              <p className="text-sm text-fg-2 mb-4">
+                For a number the carrier has taken back. It will not return without being
+                registered and verified again. To take a number out of rotation while calls
+                finish, quarantine it instead.
+              </p>
+            )}
+            <div className="mb-5">
+              <label className="field-label eyebrow" htmlFor="action-reason">
+                Reason
+              </label>
+              <textarea
+                id="action-reason"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                rows={3}
+                placeholder={
+                  confirmAction.kind === "quarantine"
+                    ? "e.g. abuse report, stuck calls on this number"
+                    : confirmAction.kind === "retire"
+                      ? "e.g. the carrier released this DID"
+                      : "e.g. proving the carrier dashboard is pointed at us"
+                }
+                className="field w-full"
+              />
+            </div>
             <div className="modal-actions">
               <button
                 onClick={() => {
@@ -673,20 +1054,36 @@ export default function NumbersPage() {
                 Cancel
               </button>
               {confirmAction.kind === "quarantine" ? (
-                <button
-                  onClick={handleQuarantine}
-                  disabled={busy}
-                  className="btn btn-danger-soft"
-                >
+                <button onClick={handleQuarantine} disabled={busy} className="btn btn-danger-soft">
                   {busy ? "Quarantining…" : "Confirm Quarantine"}
                 </button>
-              ) : (
+              ) : confirmAction.kind === "retire" ? (
                 <button
-                  onClick={handleRelease}
-                  disabled={busy}
+                  onClick={handleRetire}
+                  disabled={busy || reason.trim().length < 10}
+                  className="btn btn-danger-soft"
+                >
+                  {busy ? "Retiring…" : "Confirm Retire"}
+                </button>
+              ) : confirmAction.kind === "verify" ? (
+                <button
+                  onClick={handleVerify}
+                  disabled={busy || reason.trim().length < 10}
                   className="btn btn-accent"
                 >
-                  {busy ? "Releasing…" : "Confirm Release"}
+                  {busy ? "Opening…" : "Open the window"}
+                </button>
+              ) : confirmAction.kind === "admit" ? (
+                <button
+                  onClick={handleAdmit}
+                  disabled={busy || reason.trim().length < 10}
+                  className="btn btn-accent"
+                >
+                  {busy ? "Admitting…" : "Confirm Admit"}
+                </button>
+              ) : (
+                <button onClick={handleRelease} disabled={busy} className="btn btn-accent">
+                  {busy ? "Sending back…" : "Send back for verification"}
                 </button>
               )}
             </div>

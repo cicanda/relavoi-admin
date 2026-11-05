@@ -69,15 +69,60 @@ export interface Session {
   endedAt?: string | null;
 }
 
+/**
+ * How far a number has got towards being allowed to carry a call.
+ *
+ * Two events prove a number, not one. The inbound callback proves the
+ * carrier's Callback URL points at us; the terminal event for the same call
+ * proves its Events URL does. `missing` names whichever half has not arrived
+ * once the other has, which is the sentence that tells an operator which field
+ * in the carrier dashboard to go and fix. Backend contract 4.
+ */
+export type NumberVerification =
+  | { state: "unverified" }
+  | { state: "grandfathered" }
+  | { state: "verified"; verifiedAt: string }
+  | {
+      state: "pending";
+      startedAt: string;
+      deadlineAt: string;
+      expired: boolean;
+      callbackSeen: boolean;
+      terminalSeen: boolean;
+      missing: "inbound callback" | "terminal event" | null;
+    };
+
 export interface ProxyNumber {
   number: string;
   region?: string | null;
   provider: "AFRICASTALKING" | "TWILIO" | "PLIVO";
-  status: "AVAILABLE" | "IN_USE" | "COOLDOWN" | "QUARANTINED";
+  status:
+    | "PENDING_VERIFICATION"
+    | "AVAILABLE"
+    | "IN_USE"
+    | "COOLDOWN"
+    | "QUARANTINED"
+    | "RETIRED";
+  countryCode?: string | null;
   lastUsedAt?: string | null;
   cooldownUntil?: string | null;
   healthCheckAt?: string | null;
   provisionedAt?: string;
+  retiredAt?: string | null;
+  verification?: NumberVerification;
+  verifiedAt?: string | null;
+  neverVerified?: boolean;
+  grandfathered?: boolean;
+}
+
+export interface PoolNumbersResponse {
+  data: ProxyNumber[];
+  counts: {
+    total: number;
+    pending: number;
+    allocatable: number;
+    neverVerified: number;
+  };
 }
 
 export interface PoolStatus {

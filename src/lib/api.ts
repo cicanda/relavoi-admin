@@ -20,6 +20,7 @@ import type {
   AdminLedgerEntry,
   ContractTerms,
   ContractTermsView,
+  PoolNumbersResponse,
 } from "./types";
 
 // NEXT_PUBLIC_ADMIN_API_URL points at the backend's /v1/admin namespace.
@@ -346,8 +347,51 @@ export async function quarantineNumber(num: string, reason: string) {
   return data;
 }
 
-export async function releaseNumber(num: string) {
-  const { data } = await adminApi.post("/pool/release", { number: num });
+export async function releaseNumber(num: string, reason?: string) {
+  const { data } = await adminApi.post("/pool/release", { number: num, reason });
+  return data;
+}
+
+// ─── Registering a number we already own ──────────────────────────────────────
+//
+// Kay buys the DID from the carrier and sets its two voice fields by hand.
+// None of this buys a number: it registers one, proves it reaches us, and only
+// then lets it carry a call. Backend contract 4.
+
+export async function listPoolNumbers(): Promise<PoolNumbersResponse> {
+  const { data } = await adminApi.get<PoolNumbersResponse>("/pool/numbers");
+  return data;
+}
+
+export async function registerNumber(args: {
+  number: string;
+  countryCode: string;
+  reason: string;
+}) {
+  const { data } = await adminApi.post("/pool/numbers/register", args);
+  return data;
+}
+
+/**
+ * Opens the verification window. Proves nothing by itself: the operator then
+ * dials the number, and it is verified only once both the inbound callback and
+ * the terminal event have arrived.
+ */
+export async function startNumberVerification(num: string, reason: string) {
+  const { data } = await adminApi.post<{ deadlineAt: string; instruction: string }>(
+    "/pool/numbers/verify",
+    { number: num, reason },
+  );
+  return data;
+}
+
+export async function admitNumber(num: string, reason: string) {
+  const { data } = await adminApi.post("/pool/numbers/admit", { number: num, reason });
+  return data;
+}
+
+export async function retireNumber(num: string, reason: string) {
+  const { data } = await adminApi.post("/pool/numbers/retire", { number: num, reason });
   return data;
 }
 
