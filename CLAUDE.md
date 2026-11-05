@@ -69,3 +69,34 @@ listed in `docs/backlog.md`.
 **Read an open PR and its comments as part of the fetch-before-work rule**, not
 only when about to merge it. If it touches something we have changed, say so
 before merging rather than after.
+
+## This project will not deploy ahead of the backend
+
+`backend-contract.json` declares the oldest relavoi-backend this operator console can
+run against, as the integer `GET /v1/health` reports as `contractVersion`.
+`scripts/vercel-ignore-build.mjs` is wired in as this project's Vercel Ignored
+Build Step through `vercel.json`, and it cancels a production build while the
+live backend is behind that number. See the header of that script: Vercel's
+exit codes are inverted, exit 0 aborts the build and exit 1 lets it proceed,
+which is the only real hazard in the file.
+
+Raise the declared version in the **same commit** as the code that needs the
+newer backend, and only to a number relavoi-backend has already shipped. Its
+test suite fails if this repository asks for a version that does not exist,
+because such a build waits for ever while Vercel records each deployment as
+`CANCELED` rather than failed.
+
+Preview builds are not gated, so a pull request is never blocked by a backend
+deploy. The gate fails open: if the health endpoint cannot be reached the build
+goes ahead and says so in the log.
+
+Check the decision locally without an exit code either way:
+
+```
+npm run check:backend-contract
+RELAVOI_BACKEND_HEALTH_URL=http://localhost:8080/v1/health npm run check:backend-contract
+```
+
+A build that was cancelled waits for something to trigger it again: the next
+push, or `relavoi-infra/scripts/deploy-staging.sh` poking this project's Vercel
+deploy hook when it finishes raising the backend's contract version.
