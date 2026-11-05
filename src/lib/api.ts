@@ -167,6 +167,44 @@ export async function getTenant(id: string) {
   return data;
 }
 
+/**
+ * The industry and country lists, from the tenant-facing `GET /v1/reference`.
+ *
+ * Not on adminApi, whose base URL is the `/v1/admin` namespace, and not a copy
+ * held in the console: the API validates industry and country against the same
+ * constant that answers this call, so a list typed in here would eventually
+ * offer an operator a value the server refuses. Unauthenticated and cacheable
+ * for a day, so there is nothing to carry a token for.
+ */
+const REFERENCE_URL = `${BASE.replace(/\/admin\/?$/, "")}/reference`;
+
+export interface ReferenceLists {
+  industries: Array<{ code: string; label: string }>;
+  countries: Array<{ code: string; name: string }>;
+}
+
+export async function getReferenceLists() {
+  const { data } = await axios.get<ReferenceLists>(REFERENCE_URL, { timeout: 15_000 });
+  return data;
+}
+
+/**
+ * Correct a workspace's industry or registered country. SRE or ROOT, reasoned
+ * and audited, because the alternative an operator reaches for is an UPDATE by
+ * hand. Send only the field being changed; the other is left alone.
+ */
+export async function updateTenantProfile(
+  id: string,
+  patch: { industry?: string | null; country?: string | null; reason: string },
+) {
+  const { data } = await adminApi.patch<{
+    id: string;
+    industry: string | null;
+    country: string | null;
+  }>(`/tenants/${id}/profile`, patch);
+  return data;
+}
+
 export async function updateTenantTier(id: string, tier: Tier) {
   const { data } = await adminApi.patch<{ id: string; tier: Tier }>(`/tenants/${id}/tier`, { tier });
   return data;

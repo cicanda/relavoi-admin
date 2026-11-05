@@ -21,9 +21,11 @@ import { ConfirmDialog } from "@/components/console/confirm-dialog";
 import { KybPanel } from "@/components/console/kyb-panel";
 import { BillingPanel } from "@/components/console/billing-panel";
 import {
+  getReferenceLists,
   getTenant,
   listAdminSessions,
   listAudit,
+  updateTenantProfile,
   updateTenantStatus,
   updateTenantTier,
 } from "@/lib/api";
@@ -471,8 +473,25 @@ export default function TenantDetailPage({
         </SectionCard>
 
         {/* Card 3 — Onboarding Context */}
-        <SectionCard title="Onboarding Context" subtitle="Read-only">
-          <OnboardingFields metadata={tenant.onboardingMetadata} />
+        {/*
+          Industry used to be read from onboarding_metadata here, which is
+          empty for every workspace on the box, so the row said "Not set"
+          whatever the tenants.industry column held. It now reads the column,
+          alongside the registered country, and both are correctable: they
+          were free text until migration 038 and a workspace that answered
+          before the dropdowns existed writes to support rather than going
+          back to its own Settings page.
+        */}
+        <SectionCard title="Onboarding Context" subtitle="Profile is editable by SRE and ROOT">
+          <WorkspaceProfile
+            key={`${tenant.industry ?? ""}:${tenant.country ?? ""}`}
+            tenantId={id}
+            tenant={tenant}
+            canEdit={canEdit}
+          />
+          <div className="mt-6 pt-5 border-t border-line">
+            <OnboardingFields metadata={tenant.onboardingMetadata} />
+          </div>
         </SectionCard>
 
         {/* Card 4 — Compliance */}
@@ -668,6 +687,157 @@ function PlainHeader({ label }: { label: string }) {
   return <th>{label}</th>;
 }
 
+/**
+ * The workspace's industry and registered country.
+ *
+ * Both are the workspace's own to set from its Settings page, and normally it
+ * should. This is here because neither was a list until November 2026, so the
+ * values on file were typed from memory, and the route an operator reached for
+ * when one was wrong was an UPDATE by hand. A reason is required and the change
+ * is audited, like every other operator write on a workspace.
+ *
+ * The options come from `GET /v1/reference`, the same list the API validates
+ * against, so this cannot offer a value the save would refuse. A value stored
+ * before the lists existed is kept as an option of its own rather than
+ * disappearing from the dropdown.
+ */
+function WorkspaceProfile({
+  tenantId,
+  tenant,
+  canEdit,
+}: {
+  tenantId: string;
+  tenant: Tenant;
+  canEdit: boolean;
+}) {
+  const queryClient = useQueryClient();
+  const toast = useToast();
+
+  const reference = useQuery({
+    queryKey: ["reference"],
+    queryFn: getReferenceLists,
+    staleTime: 60 * 60 * 1000,
+  });
+
+  // Initialised from the saved values, with no effect to re-sync them: the
+  // parent gives this component a key built from the two fields, so a
+  // successful save remounts it and the form starts from what was stored.
+  const [industry, setIndustry] = useState(tenant.industry ?? "");
+  const [country, setCountry] = useState(tenant.country ?? "");
+  const [reason, setReason] = useState("");
+
+  const save = useMutation({
+    mutationFn: () =>
+      updateTenantProfile(tenantId, {
+        industry: industry || null,
+        country: country || null,
+        reason: reason.trim(),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tenant", tenantId] });
+      setReason("");
+      toast.success("Workspace profile updated");
+    },
+    onError: () => toast.error("Could not update the workspace profile"),
+  });
+
+  const industries = reference.data?.industries ?? [];
+  const countries = reference.data?.countries ?? [];
+  const industryOptions =
+    industry && !industries.some((i) => i.code === industry)
+      ? [...industries, { code: industry, label: industry }]
+      : industries;
+  const countryOptions =
+    country && !countries.some((c) => c.code === country)
+      ? [...countries, { code: country, name: country }]
+      : countries;
+
+  const industryLabel =
+    industries.find((i) => i.code === tenant.industry)?.label ?? tenant.industry ?? "Not set";
+  const countryLabel =
+    countries.find((c) => c.code === tenant.country)?.name ?? tenant.country ?? "Not set";
+
+  if (!canEdit) {
+    return (
+      <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4">
+        <div className="min-w-0">
+          <dt className="eyebrow text-fg-3">Industry</dt>
+          <dd className="mt-1 text-[14px] text-fg break-words">{industryLabel}</dd>
+        </div>
+        <div className="min-w-0">
+          <dt className="eyebrow text-fg-3">Registered country</dt>
+          <dd className="mt-1 text-[14px] text-fg break-words">{countryLabel}</dd>
+        </div>
+      </dl>
+    );
+  }
+
+  const dirty = (tenant.industry ?? "") !== industry || (tenant.country ?? "") !== country;
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Field label="Industry">
+          <select
+            value={industry}
+            onChange={(e) => setIndustry(e.target.value)}
+            disabled={reference.isLoading || save.isPending}
+            className="field w-full"
+          >
+            <option value="">Not set</option>
+            {industryOptions.map((o) => (
+              <option key={o.code} value={o.code}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </Field>
+
+        <Field label="Registered country">
+          <select
+            value={country}
+            onChange={(e) => setCountry(e.target.value)}
+            disabled={reference.isLoading || save.isPending}
+            className="field w-full"
+          >
+            <option value="">Not set</option>
+            {countryOptions.map((o) => (
+              <option key={o.code} value={o.code}>
+                {o.name}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </div>
+
+      <Field label="Reason">
+        <input
+          type="text"
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          placeholder="Why this is being changed"
+          disabled={save.isPending}
+          className="field w-full"
+        />
+      </Field>
+
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs text-fg-3">
+          Where the business is registered, not where it operates. Changes are audited.
+        </p>
+        <button
+          type="button"
+          onClick={() => save.mutate()}
+          disabled={!dirty || !reason.trim() || save.isPending}
+          className="btn btn-primary disabled:opacity-50"
+        >
+          {save.isPending ? "Saving" : "Save profile"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function OnboardingFields({
   metadata,
 }: {
@@ -681,13 +851,18 @@ function OnboardingFields({
     return String(v);
   };
 
+  // No Industry row: it is a column on the workspace now, shown and edited
+  // above by WorkspaceProfile. industry_legacy is what migration 038 parked
+  // here when it could not map a free-text answer onto the list.
   const items: Array<{ label: string; value: string }> = [
-    { label: "Industry", value: get("industry") },
     { label: "Expected sessions/day", value: get("expectedSessionsPerDay") },
     { label: "Avg session lifespan", value: get("avgSessionLifespan") },
     { label: "Regions", value: get("regions") },
     { label: "Carrier mix", value: get("carrierMix") },
     { label: "Use case detail", value: get("useCaseDetail") },
+    ...(metadata?.industry_legacy
+      ? [{ label: "Industry as first answered", value: get("industry_legacy") }]
+      : []),
   ];
 
   return (
