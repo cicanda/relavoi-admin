@@ -118,6 +118,10 @@ export interface AuditEntry {
   id: string;
   actorType: "operator" | "tenant" | "system";
   actorId?: string | null;
+  // What to call a system actor, which has no operator or tenant row and so
+  // may carry no actorId at all. Null on an operator or tenant row, whose id
+  // resolves to something the console can look up. Backend contract 3.
+  actorName?: string | null;
   action: string;
   resourceType: string;
   resourceId?: string | null;

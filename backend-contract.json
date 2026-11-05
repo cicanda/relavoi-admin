@@ -17,14 +17,15 @@
     "something triggers it again: a push, or the backend deploy script poking",
     "this project's deploy hook."
   ],
-  "minimumBackendContractVersion": 2,
+  "minimumBackendContractVersion": 3,
   "requires": [
     "GET /v1/reference, for the industry and country dropdowns on a workspace",
     "industry, country and onboardingMetadata on GET /v1/admin/tenants/:id",
     "PATCH /v1/admin/tenants/:id/profile, which requires a reason and is SRE or ROOT",
     "isInternal on every admin tenant DTO, for the marker on the Workspaces page",
     "?internal=all|exclude|only on GET /v1/admin/tenants and /v1/admin/sessions",
-    "pagination.total and counts.customer, because the overview's totals were reading the page length"
+    "pagination.total and counts.customer, because the overview's totals were reading the page length",
+    "actorName on GET /v1/admin/audit rows, because a system actor now has a null actorId"
   ],
   "healthUrl": "https://api.relavoi.com/v1/health"
 }

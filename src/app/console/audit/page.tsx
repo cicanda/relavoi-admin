@@ -214,7 +214,7 @@ export default function AuditPage() {
                               {e.actorType}
                             </span>
                             <span className="font-mono text-[11px] text-fg-3">
-                              {truncId(e.actorId)}
+                              {e.actorName ?? truncId(e.actorId)}
                             </span>
                           </div>
                         </td>
@@ -250,6 +250,7 @@ export default function AuditPage() {
                                   id: e.id,
                                   actorType: e.actorType,
                                   actorId: e.actorId,
+                                  actorName: e.actorName,
                                   action: e.action,
                                   resourceType: e.resourceType,
                                   resourceId: e.resourceId,
