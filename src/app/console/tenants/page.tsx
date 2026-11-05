@@ -16,12 +16,24 @@ type SortDir = "asc" | "desc";
 
 const TIER_OPTIONS: Array<Tier | "ALL"> = ["ALL", "STARTER", "GROWTH", "SCALE", "ENTERPRISE"];
 
+// Our own workspaces: probes, smoke tests and the Cicanda workspace. They are
+// listed by default, because this page is the complete inventory of what
+// exists and hiding rows from operators is how a workspace gets forgotten.
+// Every total excludes them instead.
+const INTERNAL_OPTIONS = [
+  { value: "all", label: "All" },
+  { value: "exclude", label: "Customers" },
+  { value: "only", label: "Internal" },
+] as const;
+type InternalFilter = (typeof INTERNAL_OPTIONS)[number]["value"];
+
 export default function TenantsListPage() {
   const router = useRouter();
 
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [tierFilter, setTierFilter] = useState<Tier | "ALL">("ALL");
+  const [internalFilter, setInternalFilter] = useState<InternalFilter>("all");
   const [sortKey, setSortKey] = useState<SortKey>("createdAt");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
@@ -34,12 +46,22 @@ export default function TenantsListPage() {
   const tierParam: Tier | undefined = tierFilter === "ALL" ? undefined : tierFilter;
 
   const query = useInfiniteQuery({
-    queryKey: ["tenants", { tier: tierParam }],
+    queryKey: ["tenants", { tier: tierParam, internal: internalFilter }],
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam }) =>
-      listTenants({ tier: tierParam, limit: 25, after: pageParam }),
+      listTenants({
+        tier: tierParam,
+        internal: internalFilter,
+        limit: 25,
+        after: pageParam,
+      }),
     getNextPageParam: (last) => last.pagination?.after ?? undefined,
   });
+
+  // Both figures come back whichever way the filter is set, so the subtitle
+  // reads the same on all three chips. From the first page: they count the
+  // whole result, not the page.
+  const counts = query.data?.pages[0]?.counts;
 
   const allTenants: Tenant[] = useMemo(
     () => query.data?.pages.flatMap((p) => p.data ?? []) ?? [],
@@ -81,7 +103,15 @@ export default function TenantsListPage() {
 
   return (
     <>
-      <PageHeader title="Tenants" description="All workspaces on the platform" />
+      <PageHeader
+        title="Tenants"
+        description={
+          counts
+            ? `${counts.customer} customer workspace${counts.customer === 1 ? "" : "s"}, ` +
+              `and ${counts.internal} of ours that no total counts.`
+            : "All workspaces on the platform"
+        }
+      />
 
       {/* Filter bar */}
       <div className="card card-pad mb-[var(--gap)]">
@@ -95,6 +125,24 @@ export default function TenantsListPage() {
               placeholder="Search by tenant name…"
               className="field w-full pl-10 pr-3 rounded-full"
             />
+          </div>
+
+          <div className="chip-row">
+            {INTERNAL_OPTIONS.map((opt) => {
+              const active = internalFilter === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setInternalFilter(opt.value)}
+                  aria-pressed={active}
+                  data-active={active}
+                  className="chip"
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
           </div>
 
           <div className="chip-row">
@@ -164,6 +212,11 @@ export default function TenantsListPage() {
                   >
                     <td className="font-medium text-[14px] tracking-[-0.01em] whitespace-nowrap">
                       {t.name}
+                      {t.isInternal && (
+                        <span className="ml-2 inline-block align-middle">
+                          <StatePill state="INTERNAL" size="sm" />
+                        </span>
+                      )}
                     </td>
                     <td className="text-fg-2">
                       {t.billingEmail ?? "Not set"}
@@ -199,7 +252,7 @@ export default function TenantsListPage() {
                       </div>
                       <div className="text-[15px] text-fg font-medium">No tenants yet</div>
                       <p className="text-xs text-fg-3 max-w-sm">
-                        {debouncedSearch || tierFilter !== "ALL"
+                        {debouncedSearch || tierFilter !== "ALL" || internalFilter !== "all"
                           ? "No tenants match the current filters."
                           : "Once workspaces sign up, they will appear here."}
                       </p>

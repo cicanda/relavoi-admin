@@ -137,6 +137,12 @@ export async function listTenants(params: {
   q?: string;
   tier?: Tier;
   status?: string;
+  /**
+   * `all` (the default) lists ours alongside the customers, `exclude` leaves
+   * ours out, `only` keeps nothing else. The default is deliberate: this
+   * console is the complete inventory of what exists.
+   */
+  internal?: "all" | "exclude" | "only";
   limit?: number;
   after?: string;
 } = {}) {
@@ -221,6 +227,8 @@ export async function updateTenantStatus(id: string, status: "ACTIVE" | "SUSPEND
 export async function listAdminSessions(params: {
   tenantId?: string;
   state?: string;
+  /** See listTenants. `all` is the default, so a listing stays complete. */
+  internal?: "all" | "exclude" | "only";
   limit?: number;
   after?: string;
 } = {}) {
@@ -503,8 +511,13 @@ export async function getCpaasStatus() {
 // for any sub-section that fails.
 export interface AdminOverview {
   infra: SystemHealth;
+  /** Customer sessions. Our own workspaces are not counted. */
   activeSessions: number;
+  /** Customer workspaces. Our own are not counted. */
   tenantsCount: number;
+  /** How many of ours were left out of each figure above. */
+  internalTenants: number;
+  internalActiveSessions: number;
   dlqDepth: number;
   poolUtilization: number;
 }
@@ -512,20 +525,41 @@ export interface AdminOverview {
 export async function getOverview(): Promise<AdminOverview> {
   const [infra, tenants, activeSess, fleet] = await Promise.allSettled([
     getSystemHealth(),
-    listTenants({ limit: 1 }),
-    listAdminSessions({ state: "ACTIVE", limit: 1 }),
+    listTenants({ limit: 1, internal: "exclude" }),
+    listAdminSessions({ state: "ACTIVE", limit: 1, internal: "exclude" }),
     getFleet(),
   ]);
 
   const infraVal = infra.status === "fulfilled" ? infra.value : {};
+
+  // `counts.customer` first, then `pagination.total`, and `count` last.
+  //
+  // These were reading `pagination.count`, which is the length of the page
+  // that was asked for. Both requests ask for one row, so both figures were
+  // 1 whatever the platform held. The fallbacks are ordered newest first so a
+  // backend below contract version 2 degrades to the old wrong-but-present
+  // number rather than to nothing, which is what the gate in
+  // scripts/vercel-ignore-build.mjs is there to make a short window.
   const tenantsCount =
     tenants.status === "fulfilled"
-      ? (tenants.value.pagination?.count ?? tenants.value.data?.length ?? 0)
+      ? (tenants.value.counts?.customer ??
+         tenants.value.pagination?.total ??
+         tenants.value.pagination?.count ??
+         tenants.value.data?.length ??
+         0)
       : 0;
+  const internalTenants =
+    tenants.status === "fulfilled" ? (tenants.value.counts?.internal ?? 0) : 0;
   const activeSessions =
     activeSess.status === "fulfilled"
-      ? (activeSess.value.pagination?.count ?? activeSess.value.data?.length ?? 0)
+      ? (activeSess.value.counts?.customer ??
+         activeSess.value.pagination?.total ??
+         activeSess.value.pagination?.count ??
+         activeSess.value.data?.length ??
+         0)
       : 0;
+  const internalActiveSessions =
+    activeSess.status === "fulfilled" ? (activeSess.value.counts?.internal ?? 0) : 0;
 
   let poolUtilization = 0;
   if (fleet.status === "fulfilled" && fleet.value.totals) {
@@ -539,6 +573,8 @@ export async function getOverview(): Promise<AdminOverview> {
     infra: infraVal,
     activeSessions,
     tenantsCount,
+    internalTenants,
+    internalActiveSessions,
     dlqDepth: infraVal.dlqDepth ?? 0,
     poolUtilization,
   };

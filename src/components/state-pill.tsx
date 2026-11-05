@@ -43,6 +43,10 @@ const MAP: Record<string, { bg: string; text: string; dot: string; label?: strin
   SUSPENDED:    AMBER,
   CANCELLED:    ROSE,
 
+  // One of ours: a probe, a smoke test or the Cicanda workspace. Muted on
+  // purpose. It is not a warning, it is a note that this row is not business.
+  INTERNAL:     MUTED,
+
   // Health checks
   ok:           { ...GREEN, label: "OK" },
   down:         { ...ROSE, label: "DOWN" },

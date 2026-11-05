@@ -41,7 +41,11 @@ export default function OverviewPage() {
 
   const tenantsQ = useQuery({
     queryKey: ["overview", "tenants-top"],
-    queryFn: () => listTenants({ limit: 100 }),
+    // Our own workspaces are left out here: this panel answers "who has signed
+    // up lately", and the five most recent rows in the database were all
+    // probes and smoke tests. The complete inventory, ours included and
+    // marked, is the Workspaces page.
+    queryFn: () => listTenants({ limit: 100, internal: "exclude" }),
     refetchInterval: 60_000,
   });
 
@@ -93,6 +97,11 @@ export default function OverviewPage() {
           <StatCard
             label="Active Sessions"
             value={overview?.activeSessions ?? 0}
+            hint={
+              overview?.internalActiveSessions
+                ? `${overview.internalActiveSessions} internal excluded`
+                : undefined
+            }
             accent="signal"
             icon={Activity}
             loading={overviewQ.isLoading}

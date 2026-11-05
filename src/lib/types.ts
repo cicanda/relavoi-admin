@@ -25,6 +25,13 @@ export interface Tenant {
   id: string;
   name: string;
   tier: Tier;
+  /**
+   * One of ours: a probe, a smoke test or the Cicanda workspace. Listed like
+   * any other, because hiding rows from operators is how a workspace gets
+   * forgotten, but left out of every total. Set through
+   * PUT /admin/tenants/:id/internal, which is ROOT and audited.
+   */
+  isInternal?: boolean;
   billingEmail?: string;
   status?: "ACTIVE" | "SUSPENDED" | "CANCELLED";
   workspaceSlug?: string;
@@ -133,7 +140,25 @@ export interface PricingRow {
 
 export interface PaginatedResponse<T> {
   data: T[];
-  pagination?: { count: number; after?: string | null };
+  pagination?: {
+    /** The length of THIS page. Never a platform total: see `total`. */
+    count: number;
+    /**
+     * Every row matching the filters, ignoring the cursor. Added because this
+     * console read `count` as a platform total, so a one-row page reported
+     * "1 workspace" however many existed. Optional: a backend below contract
+     * version 2 does not send it.
+     */
+    total?: number;
+    after?: string | null;
+  };
+  /**
+   * Customer rows and our own, counted separately over the same filters.
+   * `customer` is the only figure that belongs in a total, a report or
+   * anything customer-facing; `internal` sits next to it so an exclusion is
+   * visible rather than silent. Sent from backend contract version 2.
+   */
+  counts?: { customer: number; internal: number };
 }
 
 export interface SystemHealth {
