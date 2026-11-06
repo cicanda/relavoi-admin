@@ -977,7 +977,7 @@ export default function NumbersPage() {
                 id="reg-number"
                 value={newNumber}
                 onChange={(e) => setNewNumber(e.target.value)}
-                placeholder="+2342017001428"
+                placeholder="+2349000000100"
                 className="field w-full font-mono"
               />
             </div>
