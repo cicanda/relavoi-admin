@@ -168,7 +168,22 @@ function VerificationCell({ v }: { v: NumberVerification | undefined }): React.R
     );
   }
   if (v.callbackSeen && v.terminalSeen) {
-    return <span className="text-signal-500 text-xs whitespace-nowrap">Both received</span>;
+    // Both halves and still not verified means the call reached us and did not
+    // work. This said "Both received" until 6 November 2026, when seven calls
+    // in a row arrived, played nothing, and were ended by the carrier a quarter
+    // of a second after our response. Reading that as success is how two of
+    // them marked the number verified.
+    const t = v.terminal;
+    const detail = [
+      t?.status,
+      t?.hangupCause,
+      typeof t?.durationSeconds === "number" ? `${t.durationSeconds}s` : null,
+    ].filter(Boolean);
+    return (
+      <span className="text-rose-500 text-xs whitespace-nowrap">
+        Call did not complete{detail.length ? ` (${detail.join(", ")})` : ""}
+      </span>
+    );
   }
   if (v.missing) {
     return (

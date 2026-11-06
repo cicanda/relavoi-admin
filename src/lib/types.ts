@@ -90,6 +90,16 @@ export type NumberVerification =
       callbackSeen: boolean;
       terminalSeen: boolean;
       missing: "inbound callback" | "terminal event" | null;
+      /**
+       * What the carrier said when it ended the call, once it has ended one.
+       * Both halves seen with the number still unverified means the call
+       * reached us and did not work.
+       */
+      terminal: {
+        status: string | null;
+        hangupCause: string | null;
+        durationSeconds: number | null;
+      } | null;
     };
 
 /**
