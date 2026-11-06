@@ -92,6 +92,20 @@ export type NumberVerification =
       missing: "inbound callback" | "terminal event" | null;
     };
 
+/**
+ * What real traffic says about a number, over a trailing window.
+ *
+ * `noFinalEventCalls` counts calls on this number that connected and whose
+ * record never closed, because no final event arrived from the carrier. That
+ * is the signature of a wrong Events URL and the thing that left 26 calls
+ * stuck for four months, all on one number. Zero is an answer, not an absence:
+ * it means nothing has gone wrong on this number today.
+ */
+export interface NumberHealth {
+  noFinalEventCalls: number;
+  windowHours: number;
+}
+
 export interface ProxyNumber {
   number: string;
   region?: string | null;
@@ -113,6 +127,7 @@ export interface ProxyNumber {
   verifiedAt?: string | null;
   neverVerified?: boolean;
   grandfathered?: boolean;
+  health?: NumberHealth | null;
 }
 
 export interface PoolNumbersResponse {

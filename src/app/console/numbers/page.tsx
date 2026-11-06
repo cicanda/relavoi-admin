@@ -31,7 +31,12 @@ import { StatCard } from "@/components/stat-card";
 import { StatePill } from "@/components/state-pill";
 import { SkeletonRow } from "@/components/skeleton";
 import { fmtRelative, fmtNumber } from "@/lib/format";
-import type { ProxyNumber, PoolStatus, NumberVerification } from "@/lib/types";
+import type {
+  ProxyNumber,
+  PoolStatus,
+  NumberVerification,
+  NumberHealth,
+} from "@/lib/types";
 import type { NumberHolding, NumberQuotaRequest } from "@/lib/api";
 
 type StatusFilter =
@@ -106,6 +111,36 @@ function deriveTotals(
  * terminal event is the fault that left 26 calls stuck for four months, and it
  * is invisible from the call itself, which connects and sounds perfect.
  */
+/**
+ * What real traffic says about this number.
+ *
+ * Where the Health Check column used to be. That one read
+ * proxy_numbers.health_check_at, which nothing has ever written, so every
+ * number showed a blank and the blank read as missing data rather than as a
+ * check that did not exist.
+ *
+ * This counts calls on this number that connected and never closed, over the
+ * window the relavoi-number-health alarms watch. Zero is the healthy answer
+ * and it is shown as a word rather than a figure, because "0" in a column of
+ * figures invites the reader to wonder what it is zero of.
+ */
+function HealthCell({ h }: { h: NumberHealth | null | undefined }): React.ReactElement {
+  if (!h) return <span className="text-fg-3 text-xs">Unknown</span>;
+  if (h.noFinalEventCalls === 0) {
+    return (
+      <span className="text-fg-2 text-xs whitespace-nowrap">
+        No failed calls in {h.windowHours}h
+      </span>
+    );
+  }
+  return (
+    <span className="text-rose-500 text-xs whitespace-nowrap">
+      {h.noFinalEventCalls} call{h.noFinalEventCalls === 1 ? "" : "s"} never
+      closed in {h.windowHours}h
+    </span>
+  );
+}
+
 function VerificationCell({ v }: { v: NumberVerification | undefined }): React.ReactElement {
   if (!v) return <span className="text-fg-3 text-xs">Unknown</span>;
   if (v.state === "verified") {
@@ -686,17 +721,18 @@ export default function NumbersPage() {
                 <th>Status</th>
                 <th>Last Used</th>
                 <th>Verification</th>
+                <th>Health</th>
                 {canManage && <th className="text-right">Actions</th>}
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
-                  <SkeletonRow key={i} cols={canManage ? 7 : 6} />
+                  <SkeletonRow key={i} cols={canManage ? 8 : 7} />
                 ))
               ) : filteredNumbers.length === 0 ? (
                 <tr>
-                  <td colSpan={canManage ? 7 : 6} className="py-12">
+                  <td colSpan={canManage ? 8 : 7} className="py-12">
                     <div className="flex flex-col items-center justify-center text-center">
                       <div className="empty-icon mb-3">
                         <Hash className="w-5 h-5 text-fg-3" />
@@ -733,6 +769,9 @@ export default function NumbersPage() {
                       </td>
                       <td>
                         <VerificationCell v={n.verification} />
+                      </td>
+                      <td>
+                        <HealthCell h={n.health} />
                       </td>
                       {canManage && (
                         <td className="text-right whitespace-nowrap">

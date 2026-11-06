@@ -17,7 +17,7 @@
     "something triggers it again: a push, or the backend deploy script poking",
     "this project's deploy hook."
   ],
-  "minimumBackendContractVersion": 4,
+  "minimumBackendContractVersion": 5,
   "requires": [
     "GET /v1/reference, for the industry and country dropdowns on a workspace",
     "industry, country and onboardingMetadata on GET /v1/admin/tenants/:id",
@@ -27,7 +27,8 @@
     "pagination.total and counts.customer, because the overview's totals were reading the page length",
     "actorName on GET /v1/admin/audit rows, because a system actor now has a null actorId",
     "GET /v1/admin/pool/numbers and POST /v1/admin/pool/numbers/{register,verify,admit,retire}",
-    "PENDING_VERIFICATION and RETIRED on proxy-number status, and the verification block on each"
+    "PENDING_VERIFICATION and RETIRED on proxy-number status, and the verification block on each",
+    "health { noFinalEventCalls, windowHours } on each proxy number, for the Health column"
   ],
   "healthUrl": "https://api.relavoi.com/v1/health"
 }
