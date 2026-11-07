@@ -14,7 +14,7 @@ const TIERS: Tier[] = ["STARTER", "GROWTH", "SCALE", "ENTERPRISE"];
 
 const TIER_META: Record<
   Tier,
-  { subtitle: string; accentDot: string }
+  { subtitle: string; accentDot: string; accentCore?: string }
 > = {
   STARTER: {
     subtitle: "Onboarding plan · 100 included sessions",
@@ -22,15 +22,21 @@ const TIER_META: Record<
   },
   GROWTH: {
     subtitle: "Production-ready · 1,000 sessions",
-    accentDot: "bg-sky-500",
+    accentDot: "bg-relay-500",
   },
   SCALE: {
     subtitle: "High-volume · 4,000 sessions",
-    accentDot: "bg-violet-500",
+    accentDot: "bg-ink-900",
   },
   ENTERPRISE: {
     subtitle: "High-volume · 10,000 sessions",
-    accentDot: "bg-signal-500",
+    // Ink disc, Pulse core. The same "Pulse Teal on Ink" as the Enterprise
+    // chip, and the reason it is two elements rather than one: Pulse Teal is
+    // 2.16:1 on this card and would not clear the 3:1 a graphical object
+    // needs, while the Ink disc around it is 17.33:1 and carries Pulse at
+    // 8.01:1 inside.
+    accentDot: "bg-ink-900",
+    accentCore: "bg-pulse-500",
   },
 };
 
@@ -197,8 +203,12 @@ export default function PricingPage() {
                 <div className="min-w-0">
                   <div className="flex items-center gap-3">
                     <span
-                      className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${meta.accentDot}`}
-                    />
+                      className={`w-2.5 h-2.5 rounded-full flex-shrink-0 grid place-items-center ${meta.accentDot}`}
+                    >
+                      {meta.accentCore && (
+                        <span className={`w-1 h-1 rounded-full ${meta.accentCore}`} />
+                      )}
+                    </span>
                     <h2 className="text-[clamp(1.375rem,1.2rem+0.7vw,1.75rem)] text-fg font-normal tracking-[-0.03em] leading-none">{tier}</h2>
                   </div>
                   <p className="text-[13px] text-fg-2 mt-2">{meta.subtitle}</p>

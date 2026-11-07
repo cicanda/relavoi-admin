@@ -939,7 +939,7 @@ export default function NumbersPage() {
               <button
                 onClick={handleDecision}
                 disabled={busy || (decision.kind === "decline" && decisionNote.trim() === "")}
-                className={decision.kind === "approve" ? "btn btn-accent" : "btn btn-danger-soft"}
+                className={decision.kind === "approve" ? "btn btn-accent" : "btn btn-danger"}
               >
                 {busy
                   ? "Saving…"
@@ -1108,14 +1108,14 @@ export default function NumbersPage() {
                 Cancel
               </button>
               {confirmAction.kind === "quarantine" ? (
-                <button onClick={handleQuarantine} disabled={busy} className="btn btn-danger-soft">
+                <button onClick={handleQuarantine} disabled={busy} className="btn btn-danger">
                   {busy ? "Quarantining…" : "Confirm Quarantine"}
                 </button>
               ) : confirmAction.kind === "retire" ? (
                 <button
                   onClick={handleRetire}
                   disabled={busy || reason.trim().length < 10}
-                  className="btn btn-danger-soft"
+                  className="btn btn-danger"
                 >
                   {busy ? "Retiring…" : "Confirm Retire"}
                 </button>

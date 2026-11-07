@@ -362,7 +362,7 @@ export function KybPanel({ tenantId, canDecide }: { tenantId: string; canDecide:
                 <button
                   type="button"
                   onClick={() => setConfirm("reject")}
-                  className="btn btn-danger-soft"
+                  className="btn btn-danger"
                 >
                   Reject
                 </button>

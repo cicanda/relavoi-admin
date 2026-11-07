@@ -82,14 +82,31 @@ export function RolePill({ role, onDark = false }: { role: string; onDark?: bool
   );
 }
 
+/**
+ * The plan ladder, in brand colours, the same four as the tenant dashboard.
+ *
+ * It used to run mute, sky, violet, signal. Two of those are Tailwind's own
+ * palette and violet has no brand equivalent, which is why the token check
+ * had to allowlist it. Slate, Relay Teal, Ink, then Ink carrying Pulse Teal
+ * reads as weight increasing with the plan and uses nothing that is not ours.
+ *
+ * Pulse Teal is on the Ink chip and nowhere else, per the guidelines: 8.01:1
+ * on Ink, 2.16:1 on paper.
+ *
+ * Contrast against the ground each actually sits on:
+ *   STARTER     #313D4A on Slate at 15% over white  9.08:1
+ *   GROWTH      #096E60 on Relay at 15% over white  5.00:1
+ *   SCALE       #FFFFFF on Ink                     17.33:1
+ *   ENTERPRISE  #2CC5AE on Ink                      8.01:1
+ */
+const TIER_MAP: Record<string, string> = {
+  STARTER: "bg-ink-500/15 text-ink-700",
+  GROWTH: "bg-relay-500/15 text-relay-700",
+  SCALE: "bg-ink-900 text-paper",
+  ENTERPRISE: "bg-ink-900 text-pulse-500",
+};
+
 export function TierPill({ tier }: { tier: Tier }) {
-  const cfg =
-    tier === "ENTERPRISE"
-      ? "bg-signal-500/15 text-signal-800"
-      : tier === "SCALE"
-        ? "bg-violet-500/12 text-violet-800"
-        : tier === "GROWTH"
-          ? "bg-sky-500/12 text-sky-800"
-          : "bg-mute text-fg-2";
+  const cfg = TIER_MAP[tier] ?? TIER_MAP.STARTER;
   return <span className={`badge badge-sm flex-shrink-0 ${cfg}`}>{tier}</span>;
 }

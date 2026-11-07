@@ -212,7 +212,7 @@ export default function OperatorsPage() {
                             onClick={() => askDelete(op)}
                             disabled={isSelf || deleteM.isPending}
                             title={isSelf ? "Cannot delete yourself" : undefined}
-                            className="btn btn-danger-soft btn-sm"
+                            className="btn btn-danger btn-sm"
                           >
                             <Trash2 className="w-3 h-3" />
                             Delete
@@ -575,7 +575,7 @@ function ConfirmModal({
           type="button"
           onClick={go}
           disabled={busy}
-          className={action.danger ? "btn btn-danger-soft" : "btn btn-accent"}
+          className={action.danger ? "btn btn-danger" : "btn btn-accent"}
         >
           {busy ? "Working…" : action.confirmLabel}
         </button>

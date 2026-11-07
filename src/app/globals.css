@@ -113,11 +113,13 @@
      why scripts/check-design-tokens.mjs also fails on a colour utility whose
      family is not declared in this block.
 
-     violet is deliberately absent. It is the fourth CATEGORICAL accent on the
-     plan badges and pricing dots, sitting beside sky and signal, and the brand
-     has no fourth accent to give it. Collapsing it into info would make GROWTH
-     and SCALE the same colour. That is a palette decision, so it is listed in
-     the checker allowlist for Genesis rather than guessed at here. */
+     violet is absent because nothing asks for it any more. It used to be the
+     fourth CATEGORICAL accent on the plan badges and the pricing dots, and
+     the brand had no fourth accent to give it, so it sat in the checker's
+     allowlist waiting for a palette decision. That decision was made on
+     7 November 2026: the plan ladder is Slate, Relay Teal, Ink, and Pulse
+     Teal on Ink, which needs four values the brand already has. The
+     allowlist is empty. */
 
   /* One derived step the brand ramp did not have: a hairline border for a
      tinted card. Mixed 60% toward white in linear light, the same rule as
@@ -423,14 +425,31 @@ select option { color: var(--color-ink-900); background: #fff; }
   .btn-secondary:hover:not(:disabled) { background: #fff; border-color: var(--color-line-strong); box-shadow: var(--shadow-card); }
   .btn-ghost { background: transparent; color: var(--color-fg-2); }
   .btn-ghost:hover:not(:disabled) { background: var(--color-sunken); color: var(--color-fg); }
-  .btn-danger-soft {
-    background: rgb(179 38 30 / 0.08);   /* danger-500 */
-    border-color: rgb(179 38 30 / 0.28);
-    color: var(--color-rose-700);
+  /**
+   * The destructive button. One of them, in both consoles, with the same
+   * values in each.
+   *
+   * There were two here, a soft one on nine triggers and a solid one on
+   * three modal confirms, while the tenant dashboard wrote the
+   * soft one out by hand in utilities on all three of its own. Three
+   * treatments for one idea across two apps that sit beside each other.
+   *
+   * The survivor is the soft one, because twelve of the fifteen buttons
+   * already looked like it and because the dashboard's modal confirms were
+   * soft too. The three solid confirms here lose their fill, which is the one
+   * visible change; they stay the only red thing in their dialog, beside a
+   * neutral Cancel.
+   *
+   * Solid values rather than alpha over an assumed white: these sit on cards
+   * and on the ink panel, and an alpha fill changes colour with the ground.
+   * danger-700 on danger-100 is 6.56:1, and 4.94:1 on the hover ground.
+   */
+  .btn-danger {
+    background: var(--color-danger-100);
+    border-color: var(--color-danger-200);
+    color: var(--color-danger-700);
   }
-  .btn-danger-soft:hover:not(:disabled) { background: rgb(179 38 30 / 0.14); }
-  .btn-danger { background: var(--color-danger-500); color: var(--color-paper); }
-  .btn-danger:hover:not(:disabled) { background: var(--color-danger-700); }
+  .btn-danger:hover:not(:disabled) { background: var(--color-danger-200); }
 
   /* Circular icon button */
   .icon-btn {

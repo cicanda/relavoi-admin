@@ -27,13 +27,10 @@ const CHECK_UTILITIES = true;
 
 // A Tailwind colour family we deliberately have not re-pointed, with the
 // reason it stays.
-const ALLOWED_UTILITY_FAMILIES = {
-  // The fourth CATEGORICAL accent on the plan badges and pricing dots, beside
-  // sky and signal. The brand has no fourth accent, and folding it into info
-  // would render GROWTH and SCALE the same colour. Picking one is a palette
-  // decision and belongs to Genesis, not to this check.
-  violet: "4th categorical accent on plan badges; no brand equivalent yet",
-};
+// Empty since 7 November 2026, when violet left the plan badges: the ladder
+// is Slate, Relay Teal, Ink, and Pulse Teal on Ink, so there is no longer a
+// fourth categorical accent to find a colour for.
+const ALLOWED_UTILITY_FAMILIES = {};
 
 const ALLOWLIST = {};
 
