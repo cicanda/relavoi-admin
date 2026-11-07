@@ -355,7 +355,7 @@ function Ledger({
             </div>
             <button
               type="button"
-              className="btn btn-danger"
+              className="btn btn-danger-solid"
               disabled={!reason.trim() || reverse.isPending}
               onClick={() => reverse.mutate()}
             >
@@ -491,7 +491,7 @@ function MoneyForm({
         <div>
           <button
             type="button"
-            className={`btn ${danger ? "btn-danger" : "btn-accent"}`}
+            className={`btn ${danger ? "btn-danger-solid" : "btn-accent"}`}
             disabled={!amountNaira || !reason.trim() || !sourceKey.trim() || run.isPending}
             onClick={() => run.mutate()}
           >

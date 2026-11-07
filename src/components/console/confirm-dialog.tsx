@@ -99,7 +99,7 @@ export function ConfirmDialog({
               type="button"
               onClick={onConfirm}
               disabled={disabled || busy}
-              className={`btn ${danger ? "btn-danger" : "btn-primary"}`}
+              className={`btn ${danger ? "btn-danger-solid" : "btn-primary"}`}
             >
               {busy ? "Working…" : confirmLabel}
             </button>

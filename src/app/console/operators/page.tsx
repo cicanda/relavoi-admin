@@ -575,7 +575,7 @@ function ConfirmModal({
           type="button"
           onClick={go}
           disabled={busy}
-          className={action.danger ? "btn btn-danger" : "btn btn-accent"}
+          className={action.danger ? "btn btn-danger-solid" : "btn btn-accent"}
         >
           {busy ? "Working…" : action.confirmLabel}
         </button>

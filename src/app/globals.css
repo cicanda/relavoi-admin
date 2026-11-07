@@ -426,23 +426,40 @@ select option { color: var(--color-ink-900); background: #fff; }
   .btn-ghost { background: transparent; color: var(--color-fg-2); }
   .btn-ghost:hover:not(:disabled) { background: var(--color-sunken); color: var(--color-fg); }
   /**
-   * The destructive button. One of them, in both consoles, with the same
-   * values in each.
+   * The destructive button, in two weights. Both consoles carry the same two
+   * rules with the same values, so a dialog in one does not argue with the
+   * same dialog in the other.
    *
-   * There were two here, a soft one on nine triggers and a solid one on
-   * three modal confirms, while the tenant dashboard wrote the
-   * soft one out by hand in utilities on all three of its own. Three
-   * treatments for one idea across two apps that sit beside each other.
+   * Which one to use is a question about what the click does, not about how
+   * loud the action sounds:
    *
-   * The survivor is the soft one, because twelve of the fifteen buttons
-   * already looked like it and because the dashboard's modal confirms were
-   * soft too. The three solid confirms here lose their fill, which is the one
-   * visible change; they stay the only red thing in their dialog, beside a
-   * neutral Cancel.
+   *   .btn-danger        OPENS a destructive flow. Nothing is lost yet: the
+   *                      click raises a dialog that can still be cancelled.
+   *                      "Delete", "Abandon", "Reject", "End session".
+   *   .btn-danger-solid  IS the destructive act. The dialog's own confirm,
+   *                      and the inline confirm of a billing entry. After
+   *                      this click the workspace is suspended, the operator
+   *                      row is gone, the money has moved.
+   *
+   * Reading it the other way round is the point of the pair. A solid red
+   * button is the app saying this is the last step, so a trigger that only
+   * opens a dialog must not wear it, or the weight means nothing by the time
+   * the real confirm arrives.
+   *
+   * Before 7 November 2026 there were three treatments for the one idea
+   * across two apps that sit beside each other: a soft rule and a solid rule
+   * here, with the soft one spelled `rgb(179 38 30 / 0.08)` over an assumed
+   * white, and the tenant dashboard writing its own soft one out by hand in
+   * utilities. The pair below is the whole vocabulary now, and the names say
+   * which is which rather than leaving it to a reader to infer from a hue.
    *
    * Solid values rather than alpha over an assumed white: these sit on cards
    * and on the ink panel, and an alpha fill changes colour with the ground.
-   * danger-700 on danger-100 is 6.56:1, and 4.94:1 on the hover ground.
+   *
+   * Contrast. Soft: danger-700 on danger-100 is 6.56:1, and 4.94:1 on the
+   * hover ground. Solid: paper on danger-500 is 6.54:1, and 7.44:1 on the
+   * hover ground, which darkens rather than lightens; the fill itself is
+   * 6.54:1 against paper, well past the 3:1 a control's edge needs.
    */
   .btn-danger {
     background: var(--color-danger-100);
@@ -450,6 +467,16 @@ select option { color: var(--color-ink-900); background: #fff; }
     color: var(--color-danger-700);
   }
   .btn-danger:hover:not(:disabled) { background: var(--color-danger-200); }
+  /* Border stays transparent from .btn, like .btn-primary and .btn-accent:
+     a solid fill is its own edge. */
+  .btn-danger-solid {
+    background: var(--color-danger-500);
+    color: var(--color-paper);
+  }
+  .btn-danger-solid:hover:not(:disabled) {
+    background: var(--color-danger-700);
+    box-shadow: 0 8px 20px -10px rgb(179 38 30 / 0.7); /* danger-500 */
+  }
 
   /* Circular icon button */
   .icon-btn {
