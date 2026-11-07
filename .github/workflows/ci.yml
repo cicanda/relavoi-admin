@@ -28,6 +28,13 @@ jobs:
       - name: Type-check
         run: npx tsc --noEmit
 
+      - name: Design tokens
+        # Fails on a colour or a font that is not a brand token, and on a
+        # Tailwind colour utility whose family is not declared in the token
+        # file. The brand pass missed two literals and about 110 utility
+        # classes; both classes of miss were found by eye, which does not
+        # scale. See the header of the script.
+        run: npm run check:tokens
       - name: Build
         env:
           NEXT_PUBLIC_ADMIN_API_URL: https://api.relavoi.com/v1/admin

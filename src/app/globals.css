@@ -100,6 +100,58 @@
   --color-chart-missed: #9A4F11;
   --color-chart-failed: #B3261E;
   --color-chart-a2b: #0B7A6B;
+
+  /* Tailwind stock families, re-pointed at the brand ----------------------
+     A utility class like bg-red-50 or text-blue-700 is not a colour literal,
+     so a grep for hex and oklch cannot see it. Before this block those classes
+     rendered Tailwind own red, blue, sky and emerald rather than our danger,
+     info and success tones: about 110 call sites across this app and the
+     console. Re-pointing the family fixes every one of them at once and
+     changes no markup.
+
+     A step not listed here still falls through to Tailwind default, which is
+     why scripts/check-design-tokens.mjs also fails on a colour utility whose
+     family is not declared in this block.
+
+     violet is deliberately absent. It is the fourth CATEGORICAL accent on the
+     plan badges and pricing dots, sitting beside sky and signal, and the brand
+     has no fourth accent to give it. Collapsing it into info would make GROWTH
+     and SCALE the same colour. That is a palette decision, so it is listed in
+     the checker allowlist for Genesis rather than guessed at here. */
+
+  /* One derived step the brand ramp did not have: a hairline border for a
+     tinted card. Mixed 60% toward white in linear light, the same rule as
+     every other tint here, giving 1.33:1 on its own tint. Tailwind own
+     red-200 on red-50 is 1.32:1, so the weight is unchanged. */
+  --color-danger-200: #E5CDCC;
+  --color-success-200: #CCD7CF;
+  --color-info-200: #CCD2E1;
+
+  --color-red-50:  #F6EFEF;
+  --color-red-100: #F6EFEF;
+  --color-red-200: #E5CDCC;
+  --color-red-500: #B3261E;
+  --color-red-600: #B3261E;
+  --color-red-700: #A4221B;
+  --color-red-800: #A4221B;
+
+  --color-blue-50:  #EFF1F5;
+  --color-blue-200: #CCD2E1;
+  --color-blue-500: #1F5FA6;
+  --color-blue-700: #1B5698;
+  --color-blue-800: #1B5698;
+
+  --color-sky-300: #86ABD5;
+  --color-sky-500: #1F5FA6;
+  --color-sky-800: #1B5698;
+  --color-sky-900: #1B5698;
+
+  --color-emerald-50:  #EFF2F0;
+  --color-emerald-200: #CCD7CF;
+  --color-emerald-500: #1F7A43;
+  --color-emerald-600: #1F7A43;
+  --color-emerald-800: #1B6F3D;
+  --color-emerald-900: #1B6F3D;
   --color-chart-b2a: #1F5FA6;
   --color-chart-grid: #ECEDEE;
   --color-chart-axis: #5B6B7A;
@@ -212,8 +264,8 @@ select option { color: var(--color-ink-900); background: #fff; }
 
 /* Pulse dot for "live"/ACTIVE indicators */
 @keyframes pulse-dot {
-  0%, 100% { box-shadow: 0 0 0 0 rgb(91 201 122 / 0.5); }
-  50%      { box-shadow: 0 0 0 6px rgb(91 201 122 / 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgb(11 122 107 / 0.5); }  /* relay-500 */
+  50%      { box-shadow: 0 0 0 6px rgb(11 122 107 / 0); }
 }
 .animate-pulse-dot { animation: pulse-dot 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
 
@@ -263,9 +315,11 @@ select option { color: var(--color-ink-900); background: #fff; }
   .panel-dark {
     color: var(--color-ink-200);
     background:
-      radial-gradient(120% 70% at 0% 0%, rgb(91 201 122 / 0.16), transparent 55%),
+      radial-gradient(120% 70% at 0% 0%, rgb(44 197 174 / 0.16), transparent 55%),
       radial-gradient(90% 60% at 100% 100%, rgb(11 122 107 / 0.22), transparent 60%),
-      linear-gradient(180deg, #111A2B 0%, var(--color-ink-900) 100%);
+      linear-gradient(180deg,
+        color-mix(in srgb, var(--color-ink-800) 20%, var(--color-ink-900)) 0%,
+        var(--color-ink-900) 100%);
     /* A solid base under the gradients: the computed background-color is what
        the E2E suite reads to tell the sidebar apart from the page. */
     background-color: var(--color-ink-900);
@@ -360,7 +414,7 @@ select option { color: var(--color-ink-900); background: #fff; }
   .btn-primary:hover:not(:disabled) { background: var(--color-ink-700); box-shadow: var(--shadow-card); }
   /* Brand green */
   .btn-accent { background: var(--color-signal-500); color: var(--color-ink-900); }
-  .btn-accent:hover:not(:disabled) { background: var(--color-signal-600); box-shadow: 0 8px 20px -10px rgb(58 148 86 / 0.7); }
+  .btn-accent:hover:not(:disabled) { background: var(--color-signal-600); box-shadow: 0 8px 20px -10px rgb(10 116 102 / 0.7); } /* signal-600 */
   .btn-secondary {
     background: var(--color-surface);
     border-color: var(--color-line);
@@ -370,13 +424,13 @@ select option { color: var(--color-ink-900); background: #fff; }
   .btn-ghost { background: transparent; color: var(--color-fg-2); }
   .btn-ghost:hover:not(:disabled) { background: var(--color-sunken); color: var(--color-fg); }
   .btn-danger-soft {
-    background: rgb(244 63 94 / 0.08);
-    border-color: rgb(244 63 94 / 0.28);
+    background: rgb(179 38 30 / 0.08);   /* danger-500 */
+    border-color: rgb(179 38 30 / 0.28);
     color: var(--color-rose-700);
   }
-  .btn-danger-soft:hover:not(:disabled) { background: rgb(244 63 94 / 0.14); }
-  .btn-danger { background: #DC2626; color: #fff; }
-  .btn-danger:hover:not(:disabled) { background: #B91C1C; }
+  .btn-danger-soft:hover:not(:disabled) { background: rgb(179 38 30 / 0.14); }
+  .btn-danger { background: var(--color-danger-500); color: var(--color-paper); }
+  .btn-danger:hover:not(:disabled) { background: var(--color-danger-700); }
 
   /* Circular icon button */
   .icon-btn {
@@ -481,9 +535,9 @@ select option { color: var(--color-ink-900); background: #fff; }
   .field:hover:not(:disabled) { border-color: var(--color-line-strong); }
   .field:focus {
     outline: none;
-    background: #fff;
+    background: var(--color-paper);
     border-color: var(--color-signal-600);
-    box-shadow: 0 0 0 3px rgb(91 201 122 / 0.22);
+    box-shadow: 0 0 0 3px rgb(11 122 107 / 0.22); /* relay-500 */
   }
   .field:disabled { color: var(--color-fg-3); cursor: not-allowed; }
   textarea.field { padding: 0.625rem 0.875rem; line-height: 1.5; }
@@ -523,7 +577,7 @@ select option { color: var(--color-ink-900); background: #fff; }
   .data-table td:last-child { padding-right: var(--card-pad); }
   .data-table tbody tr { transition: background-color 140ms ease; }
   .data-table tbody tr.row-link { cursor: pointer; }
-  .data-table tbody tr:hover > td { background: rgb(245 242 236 / 0.7); }
+  .data-table tbody tr:hover > td { background: rgb(238 243 242 / 0.7); } /* mist */
   /* Tables inside cards scroll inside themselves, never the page */
   .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
